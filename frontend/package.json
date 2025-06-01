@@ -10,8 +10,18 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tiptap/extension-font-family": "^2.12.0",
+    "@tiptap/extension-image": "^2.12.0",
+    "@tiptap/extension-text-style": "^2.12.0",
+    "@tiptap/react": "^2.12.0",
+    "@tiptap/starter-kit": "^2.12.0",
     "framer-motion": "^12.15.0",
+    "html-to-pdfmake": "^2.5.26",
+    "jspdf": "^3.0.1",
     "lucide-react": "^0.511.0",
+    "marked": "^15.0.12",
+    "pdfmake": "^0.2.20",
+    "quill": "^2.0.3",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },

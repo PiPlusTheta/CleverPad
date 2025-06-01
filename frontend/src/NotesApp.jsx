@@ -36,9 +36,26 @@ export default function NotesApp() {
   // ──────────────────────────────────────────────────────────────────────────────
   // Auth state
   // ──────────────────────────────────────────────────────────────────────────────
-  const [user, setUser] = useState(null);
+  const [user, setUserState] = useState(() => {
+    try {
+      const stored = localStorage.getItem("user");
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
   const [authMode, setAuthMode] = useState("login");
   const [loadingNotes, setLoadingNotes] = useState(false);
+
+  // Persist user to localStorage on login/signup
+  const setUser = (userObj) => {
+    setUserState(userObj);
+    if (userObj) {
+      localStorage.setItem("user", JSON.stringify(userObj));
+    } else {
+      localStorage.removeItem("user");
+    }
+  };
 
   const handleLogin = setUser;
   const handleSignup = setUser;
@@ -56,11 +73,18 @@ export default function NotesApp() {
   // Fetch notes from backend when user logs in
   // ──────────────────────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!user || !user.token) return;
+    if (!user) {
+      setNotes([]);
+      setActiveId(null);
+      setTitleDraft("");
+      setDraft("");
+      return;
+    }
     setLoadingNotes(true);
-    fetch("http://localhost:8000/notes/", {
-      headers: { Authorization: `Bearer ${user.token}` },
-    })
+    const fetchOptions = user.token
+      ? { headers: { Authorization: `Bearer ${user.token}` } }
+      : {};
+    fetch("http://localhost:8000/notes/", fetchOptions)
       .then(res => res.json())
       .then(data => {
         setNotes(data);
@@ -80,7 +104,6 @@ export default function NotesApp() {
   // ──────────────────────────────────────────────────────────────────────────────
   // Notes helpers
   // ──────────────────────────────────────────────────────────────────────────────
-  // Save note (update)
   const saveNote = async () => {
     if (activeId === null || !user?.token) return;
     await fetch(`http://localhost:8000/notes/${activeId}`, {
@@ -91,7 +114,6 @@ export default function NotesApp() {
       },
       body: JSON.stringify({ title: titleDraft, content: draft }),
     });
-    // Refresh notes
     const res = await fetch("http://localhost:8000/notes/", {
       headers: { Authorization: `Bearer ${user.token}` },
     });
@@ -99,7 +121,6 @@ export default function NotesApp() {
     setNotes(data);
   };
 
-  // Add note (create)
   const addNote = async () => {
     if (!user?.token) return;
     const res = await fetch("http://localhost:8000/notes/", {
@@ -118,7 +139,6 @@ export default function NotesApp() {
     setSearch("");
   };
 
-  // Delete note
   const deleteNote = async id => {
     if (id === null || !user?.token) return;
     await fetch(`http://localhost:8000/notes/${id}`, {
@@ -141,7 +161,6 @@ export default function NotesApp() {
     }
   };
 
-  // Open note
   const openNote = id => {
     const note = notes.find(n => n.id === id);
     if (!note) return;
@@ -150,17 +169,11 @@ export default function NotesApp() {
     setDraft(note.content);
   };
 
-  // ──────────────────────────────────────────────────────────────────────────────
-  // Filtering helpers
-  // ──────────────────────────────────────────────────────────────────────────────
   const filteredNotes = notes.filter(n =>
     n.title.toLowerCase().includes(search.toLowerCase()) ||
     n.content.toLowerCase().includes(search.toLowerCase())
   );
 
-  // ──────────────────────────────────────────────────────────────────────────────
-  // Layout
-  // ──────────────────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen flex flex-col md:grid md:grid-cols-[20rem_1fr] bg-white dark:bg-zinc-950 text-black dark:text-zinc-100">
       {/* Profile */}
@@ -170,7 +183,7 @@ export default function NotesApp() {
         </div>
       )}
 
-      {/* Auth modals */}
+      {/* Auth Modals */}
       {!user && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/30 z-40 p-4">
           {authMode === "login" ? (
@@ -198,17 +211,19 @@ export default function NotesApp() {
       </aside>
 
       {/* Editor */}
-      <main className="flex-1 p-4 sm:p-6 flex flex-col gap-4 overflow-y-auto">
+      <main className="flex flex-col h-full p-4 sm:p-6 gap-4 overflow-y-auto">
         {activeId !== null ? (
-          <NoteEditor
-            titleDraft={titleDraft}
-            setTitleDraft={setTitleDraft}
-            draft={draft}
-            setDraft={setDraft}
-            saveNote={saveNote}
-            deleteNote={deleteNote}
-            activeId={activeId}
-          />
+          <div className="flex-1 border rounded-2xl bg-white dark:bg-zinc-900 p-2">
+            <NoteEditor
+              titleDraft={titleDraft}
+              setTitleDraft={setTitleDraft}
+              draft={draft}
+              setDraft={setDraft}
+              saveNote={saveNote}
+              deleteNote={deleteNote}
+              activeId={activeId}
+            />
+          </div>
         ) : (
           <EmptyState />
         )}

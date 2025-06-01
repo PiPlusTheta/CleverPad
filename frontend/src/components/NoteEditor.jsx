@@ -2,8 +2,8 @@ import React from "react";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
-import { Textarea } from "./ui/textarea";
 import { Trash2 } from "lucide-react";
+import RichTextEditor from "./RichTextEditor";
 
 export default function NoteEditor({
   titleDraft,
@@ -36,14 +36,9 @@ export default function NoteEditor({
           Save
         </Button>
       </div>
-      <Card className="flex-1 rounded-2xl shadow bg-white dark:bg-zinc-900">
-        <CardContent className="h-full p-0">
-          <Textarea
-            className="h-full w-full resize-none border-none rounded-2xl focus:ring-0 p-6 text-base bg-white dark:bg-zinc-900 text-black dark:text-zinc-100"
-            value={draft}
-            onChange={e => setDraft(e.target.value)}
-            placeholder="Start writing..."
-          />
+      <Card className="flex flex-col flex-1 rounded-2xl shadow bg-white dark:bg-zinc-900">
+        <CardContent className="flex flex-col flex-1 p-0 overflow-hidden">
+          <RichTextEditor content={draft} setContent={setDraft} />
         </CardContent>
       </Card>
     </>
