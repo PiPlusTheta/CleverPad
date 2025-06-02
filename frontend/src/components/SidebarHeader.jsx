@@ -9,9 +9,8 @@ import { Plus } from "lucide-react";
  */
 export default function SidebarHeader({ addNote }) {
   return (
-    <div className="flex items-center justify-center">
-      <button
-        className="inline-flex items-center gap-2 px-3 py-1.5 bg-chatgpt-accent hover:opacity-80 text-white transition-all duration-200 rounded-lg text-xs font-medium shadow-sm hover:shadow-md w-full justify-center"
+    <div className="flex items-center justify-center">      <button
+        className="inline-flex items-center gap-2 px-3 py-1.5 bg-chatgpt-green hover:opacity-80 text-white transition-all duration-200 rounded-lg text-xs font-medium shadow-sm hover:shadow-md w-full justify-center"
         onClick={addNote}
         aria-label="Add note"
       >

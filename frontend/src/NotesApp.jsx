@@ -3,7 +3,8 @@ import {
   Menu,
   X,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  BarChart3
 } from "lucide-react";
 import SidebarHeader from "./components/SidebarHeader";
 import NotesSearch from "./components/NotesSearch";
@@ -15,6 +16,7 @@ import Login from "./components/Login";
 import Signup from "./components/Signup";
 import Profile from "./components/Profile";
 import ThemeToggle from "./components/ThemeToggle";
+import NotesStatistics from "./components/NotesStatistics";
 
 export default function NotesApp() {
   // ──────────────────────────────────────────────────────────────────────────────
@@ -96,20 +98,14 @@ export default function NotesApp() {
     setLoadingNotes(true);
     const fetchOptions = user.token
       ? { headers: { Authorization: `Bearer ${user.token}` } }
-      : {};
-    fetch("http://localhost:8000/notes/", fetchOptions)
+      : {};    fetch("http://localhost:8000/notes/", fetchOptions)
       .then((res) => res.json())
       .then((data) => {
         setNotes(data);
-        if (data.length > 0) {
-          setActiveId(data[0].id);
-          setTitleDraft(data[0].title);
-          setDraft(data[0].content);
-        } else {
-          setActiveId(null);
-          setTitleDraft("");
-          setDraft("");
-        }
+        // Don't automatically select the first note - show welcome screen instead
+        setActiveId(null);
+        setTitleDraft("");
+        setDraft("");
       })
       .finally(() => setLoadingNotes(false));
   }, [user]);
@@ -176,13 +172,18 @@ export default function NotesApp() {
       }
     }
   };
-
   const openNote = (id) => {
     const note = notes.find((n) => n.id === id);
     if (!note) return;
     setActiveId(id);
     setTitleDraft(note.title);
     setDraft(note.content);
+  };
+
+  const showWelcomeScreen = () => {
+    setActiveId(null);
+    setTitleDraft("");
+    setDraft("");
   };
 
   const filteredNotes = notes.filter(
@@ -211,11 +212,14 @@ export default function NotesApp() {
             : "-translate-x-full lg:translate-x-0 lg:w-16"
         }`}
       >
-        <div>
-          {/* Sidebar header: Only show hamburger when collapsed */}
+        <div>          {/* Sidebar header: Only show hamburger when collapsed */}
           <div className="flex items-center justify-between p-4 border-b border-chatgpt-border">
             {sidebarOpen ? (
-              <div className="flex items-center gap-2">
+              <button 
+                onClick={showWelcomeScreen}
+                className="flex items-center gap-2 hover:bg-chatgpt-bg-element rounded-lg p-2 transition-colors duration-200 -ml-2"
+                title="Go to welcome screen"
+              >
                 <span className="w-4 h-4 inline-block text-chatgpt-accent">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -236,7 +240,7 @@ export default function NotesApp() {
                   </svg>
                 </span>
                 <h1 className="text-sm font-medium text-chatgpt-text-primary">CleverPad</h1>
-              </div>
+              </button>
             ) : (
               <div />
             )}
@@ -293,8 +297,7 @@ export default function NotesApp() {
         </div>
 
         {/* Content */}
-        <div className="flex-1 flex">
-          {/* Editor Area */}
+        <div className="flex-1 flex">          {/* Editor Area */}
           <div className="flex-1 flex flex-col">
             {activeId !== null ? (
               <div className="flex-1 bg-chatgpt-bg-primary">
@@ -308,10 +311,8 @@ export default function NotesApp() {
                   activeId={activeId}
                 />
               </div>
-            ) : filteredNotes.length === 0 ? (
-              <WelcomeScreen onCreateNote={addNote} />
             ) : (
-              <EmptyState />
+              <WelcomeScreen onCreateNote={addNote} hasNotes={notes.length > 0} />
             )}
           </div>
 
@@ -323,18 +324,17 @@ export default function NotesApp() {
               className={`hidden xl:flex flex-col bg-chatgpt-bg-secondary border-l border-chatgpt-border transition-all duration-300 ease-in-out ${
                 rightSidebarOpen ? "w-64" : "w-16"
               }`}
-            >
-              {/* Header with collapse/expand control */}
+            >              {/* Header with collapse/expand control */}
               <div className="flex items-center justify-between p-2 border-b border-chatgpt-border">
                 {rightSidebarOpen && (
                   <span className="text-sm font-medium text-chatgpt-text-primary">
-                    Profile
+                    Statistics
                   </span>
                 )}
                 <button
                   onClick={() => setRightSidebarOpen(!rightSidebarOpen)}
                   className="p-2 rounded-lg hover:bg-chatgpt-bg-element transition-colors duration-200"
-                  aria-label="Toggle profile panel"
+                  aria-label="Toggle statistics panel"
                 >
                   {rightSidebarOpen ? (
                     <ChevronRight className="w-4 h-4" />
@@ -342,18 +342,40 @@ export default function NotesApp() {
                     <ChevronLeft className="w-4 h-4" />
                   )}
                 </button>
-              </div>
+              </div>              {/* Collapsed state - show icon */}
+              {!rightSidebarOpen && (
+                <div className="flex flex-col items-center justify-center flex-1 py-4">
+                  <div className="p-3 rounded-lg bg-chatgpt-bg-element border border-chatgpt-border">
+                    <BarChart3 className="w-5 h-5 text-chatgpt-text-secondary" />
+                  </div>
+                </div>
+              )}
 
               {rightSidebarOpen && (
                 <div className="p-4 overflow-y-auto custom-scrollbar flex-1 space-y-4">
-                  <Profile user={user} onLogout={handleLogout} />
-                  <div className="text-sm text-chatgpt-text-secondary">
-                    <h3 className="font-medium mb-2">Quick Actions</h3>
+                  <NotesStatistics 
+                    notes={notes} 
+                    activeNote={activeId ? notes.find(n => n.id === activeId) : null}
+                    search={search}
+                  />
+                  
+                  {/* Profile Section */}
+                  <div>
+                    <h3 className="text-xs font-semibold text-chatgpt-text-primary mb-2 px-1">Profile</h3>
+                    <Profile user={user} onLogout={handleLogout} />
+                  </div>
+                  
+                  {/* Quick Actions */}
+                  <div>
+                    <h3 className="text-xs font-semibold text-chatgpt-text-primary mb-2 px-1">Quick Actions</h3>
                     <div className="space-y-2">
-                      <button className="w-full text-left p-2 rounded-lg hover:bg-chatgpt-bg-element transition-colors">
-                        Export Notes
+                      <button className="w-full text-left p-2 rounded-lg hover:bg-chatgpt-bg-element transition-colors duration-200 text-xs text-chatgpt-text-secondary hover:text-chatgpt-text-primary">
+                        Export All Notes
                       </button>
-                      <button className="w-full text-left p-2 rounded-lg hover:bg-chatgpt-bg-element transition-colors">
+                      <button className="w-full text-left p-2 rounded-lg hover:bg-chatgpt-bg-element transition-colors duration-200 text-xs text-chatgpt-text-secondary hover:text-chatgpt-text-primary">
+                        Import Notes
+                      </button>
+                      <button className="w-full text-left p-2 rounded-lg hover:bg-chatgpt-bg-element transition-colors duration-200 text-xs text-chatgpt-text-secondary hover:text-chatgpt-text-primary">
                         Settings
                       </button>
                     </div>

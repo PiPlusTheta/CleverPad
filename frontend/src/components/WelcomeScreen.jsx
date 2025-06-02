@@ -1,7 +1,7 @@
 import React from "react";
 import { Edit3, Save, Download, Plus } from "lucide-react";
 
-export default function WelcomeScreen({ onCreateNote }) {
+export default function WelcomeScreen({ onCreateNote, hasNotes = false }) {
   const features = [
     {
       icon: Edit3,
@@ -22,25 +22,27 @@ export default function WelcomeScreen({ onCreateNote }) {
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center min-h-[60vh] px-6 py-12">
-      {/* Logo/Icon */}
-      <div className="mb-8">        <div className="w-16 h-16 bg-chatgpt-accent rounded-2xl flex items-center justify-center mb-4">
+      {/* Logo/Icon */}      <div className="mb-8">        <div className="w-16 h-16 bg-chatgpt-green rounded-2xl flex items-center justify-center mb-4">
           <Edit3 className="w-8 h-8 text-white" />
         </div>
       </div>      {/* Main Content */}
-      <div className="text-center max-w-2xl mx-auto mb-12">        <h1 className="text-2xl md:text-3xl font-bold text-chatgpt-text-primary mb-4">
-          Welcome to CleverPad
+      <div className="text-center max-w-2xl mx-auto mb-12">
+        <h1 className="text-2xl md:text-3xl font-bold text-chatgpt-text-primary mb-4">
+          {hasNotes ? "Welcome back to CleverPad" : "Welcome to CleverPad"}
         </h1>
         <p className="text-base text-chatgpt-text-secondary mb-8">
-          Your ideas deserve a beautiful home. Create, edit, and organize your notes with our intuitive and powerful editor.
+          {hasNotes 
+            ? "Select a note from the sidebar to continue editing, or create a new one to capture fresh ideas."
+            : "Your ideas deserve a beautiful home. Create, edit, and organize your notes with our intuitive and powerful editor."
+          }
         </p>
-        
         {onCreateNote && (
           <button
             onClick={onCreateNote}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-chatgpt-accent hover:opacity-80 text-white font-semibold rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-chatgpt-green hover:opacity-80 text-white font-semibold rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
           >
             <Plus className="w-5 h-5" />
-            Create Your First Note
+            {hasNotes ? "Create New Note" : "Create Your First Note"}
           </button>
         )}
       </div>
@@ -58,8 +60,8 @@ export default function WelcomeScreen({ onCreateNote }) {
                 key={index}
                 className="bg-chatgpt-bg-element border border-chatgpt-border rounded-xl p-6 text-center hover:shadow-lg transition-shadow duration-200"
               >                <div className="inline-flex items-center justify-center w-12 h-12 bg-chatgpt-bg-secondary rounded-lg mb-4">
-                  <IconComponent className="w-6 h-6 text-chatgpt-accent" />
-                </div>                <h3 className="text-sm font-semibold text-chatgpt-text-primary mb-2">
+                  <IconComponent className="w-6 h-6 text-chatgpt-green" />
+                </div><h3 className="text-sm font-semibold text-chatgpt-text-primary mb-2">
                   {feature.title}
                 </h3>
                 <p className="text-chatgpt-text-secondary text-xs leading-relaxed">

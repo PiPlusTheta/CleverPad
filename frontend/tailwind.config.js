@@ -19,6 +19,8 @@ module.exports = {
           'text-secondary': 'var(--color-text-secondary)',
           'border': 'var(--color-border)',
           'accent': 'var(--color-accent)',
+          'green': 'var(--color-green)',
+          'selected-note': 'var(--color-selected-note)',
         }
       },
       transitionProperty: {
