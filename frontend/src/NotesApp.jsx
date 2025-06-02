@@ -175,13 +175,8 @@ export default function NotesApp() {
   );
 
   return (
-    <div className="min-h-screen flex flex-col md:grid md:grid-cols-[20rem_1fr] bg-white dark:bg-zinc-950 text-black dark:text-zinc-100">
-      {/* Profile */}
-      {user && (
-        <div className="fixed top-2 right-2 sm:top-4 sm:right-4 z-50 max-w-[10rem] sm:max-w-none">
-          <Profile user={user} onLogout={handleLogout} />
-        </div>
-      )}
+    <div className="min-h-screen flex flex-col md:grid md:grid-cols-[20rem_1fr_10rem] bg-white dark:bg-zinc-950 text-black dark:text-zinc-100">
+      
 
       {/* Auth Modals */}
       {!user && (
@@ -228,6 +223,12 @@ export default function NotesApp() {
           <EmptyState />
         )}
       </main>
+      {/* Profile */}
+      {user && (
+        <div className="fixed top-2 right-2 sm:top-4 sm:right-4 z-50 max-w-[10rem] sm:max-w-none">
+          <Profile user={user} onLogout={handleLogout} />
+        </div>
+      )}
     </div>
   );
 }

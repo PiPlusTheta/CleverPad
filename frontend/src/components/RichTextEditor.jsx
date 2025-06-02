@@ -4,6 +4,7 @@ import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
 import FontFamily from '@tiptap/extension-font-family';
 import TextStyle from '@tiptap/extension-text-style';
+import TextAlign from '@tiptap/extension-text-align';
 import Underline from '@tiptap/extension-underline';
 import htmlToPdfmake from 'html-to-pdfmake';
 import pdfMake from 'pdfmake/build/pdfmake';
@@ -34,7 +35,8 @@ import {
   AlignJustify,
 } from 'lucide-react';
 import pdfFonts from 'pdfmake/build/vfs_fonts';
-pdfMake.vfs = pdfFonts.pdfMake.vfs;
+
+// pdfMake.vfs = pdfFonts.pdfMake.vfs;
 
 // Configure marked to use async rendering
 marked.use({ async: true });
@@ -43,13 +45,15 @@ const RichTextEditor = ({ content, setContent }) => {
   const fileInputRef = useRef();
   const [showPreview, setShowPreview] = useState(false);
   const [previewContent, setPreviewContent] = useState('');
-
   const editor = useEditor({
     extensions: [
       StarterKit,
       Image,
       FontFamily,
       TextStyle,
+      TextAlign.configure({
+        types: ['heading', 'paragraph'],
+      }),
       Underline,
     ],
     content: content || '<p>Start typing here...</p>',

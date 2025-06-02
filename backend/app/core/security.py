@@ -21,10 +21,11 @@ def create_access_token(
     data: Dict[str, Any], expires_delta: Optional[int] = None
 ) -> str:
     to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(
-        minutes=expires_delta or settings.access_token_expire_minutes
-    )
-    to_encode.update({"exp": expire})
+    # Remove expiration for infinite token duration
+    # expire = datetime.utcnow() + timedelta(
+    #     minutes=expires_delta or settings.access_token_expire_minutes
+    # )
+    # to_encode.update({"exp": expire})
     return jwt.encode(to_encode, settings.secret_key, algorithm=settings.algorithm)
 
 
