@@ -120,16 +120,19 @@ export default function NotesApp() {
     const data = await res.json();
     setNotes(data);
   };
-
   const addNote = async () => {
     if (!user?.token) return;
+    const now = new Date();
+    const dateTime = now.toLocaleString();
+    const defaultTitle = `Untitled - ${dateTime}`;
+    
     const res = await fetch("http://localhost:8000/notes/", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${user.token}`,
       },
-      body: JSON.stringify({ title: "Untitled", content: "" }),
+      body: JSON.stringify({ title: defaultTitle, content: "" }),
     });
     const newNote = await res.json();
     setNotes(prev => [newNote, ...prev]);

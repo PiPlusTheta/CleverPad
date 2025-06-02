@@ -35,10 +35,9 @@ export default function NoteEditor({
         <Button onClick={saveNote} className="rounded-2xl shadow flex-shrink-0">
           Save
         </Button>
-      </div>
-      <Card className="flex flex-col flex-1 rounded-2xl shadow bg-white dark:bg-zinc-900">
+      </div>      <Card className="flex flex-col flex-1 rounded-2xl shadow bg-white dark:bg-zinc-900">
         <CardContent className="flex flex-col flex-1 p-0 overflow-hidden">
-          <RichTextEditor content={draft} setContent={setDraft} />
+          <RichTextEditor content={draft} setContent={setDraft} title={titleDraft} />
         </CardContent>
       </Card>
     </>

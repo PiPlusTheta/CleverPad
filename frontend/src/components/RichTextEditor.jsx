@@ -35,13 +35,12 @@ import {
   AlignJustify,
 } from 'lucide-react';
 import pdfFonts from 'pdfmake/build/vfs_fonts';
-
-// pdfMake.vfs = pdfFonts.pdfMake.vfs;
+pdfMake.vfs = pdfFonts?.pdfMake?.vfs;
 
 // Configure marked to use async rendering
 marked.use({ async: true });
 
-const RichTextEditor = ({ content, setContent }) => {
+const RichTextEditor = ({ content, setContent, title = "Untitled" }) => {
   const fileInputRef = useRef();
   const [showPreview, setShowPreview] = useState(false);
   const [previewContent, setPreviewContent] = useState('');
@@ -59,6 +58,15 @@ const RichTextEditor = ({ content, setContent }) => {
     content: content || '<p>Start typing here...</p>',
     onUpdate: ({ editor }) => setContent(editor.getHTML()),
   });
+  // Update editor content when content prop changes
+  useEffect(() => {
+    if (editor && content !== undefined) {
+      const currentContent = editor.getHTML();
+      if (currentContent !== content) {
+        editor.commands.setContent(content || '<p>Start typing here...</p>');
+      }
+    }
+  }, [editor, content]);
 
   // Update preview content whenever editor content changes
   useEffect(() => {
@@ -84,8 +92,15 @@ const RichTextEditor = ({ content, setContent }) => {
       editor.chain().focus().setImage({ src: url }).run();
     }
   };
-
   const setFont = font => editor.chain().focus().setFontFamily(font).run();
+
+  // Helper function to sanitize filename
+  const sanitizeFilename = (filename) => {
+    return filename
+      .replace(/[<>:"/\\|?*]/g, '_') // Replace invalid characters with underscore
+      .replace(/\s+/g, '_') // Replace spaces with underscore
+      .trim();
+  };
 
   const exportPDF = async () => {
     try {
@@ -106,13 +121,13 @@ const RichTextEditor = ({ content, setContent }) => {
           }
         }
       };
-      pdfMake.createPdf(docDefinition).download('note.pdf');
+      const filename = `${sanitizeFilename(title)}.pdf`;
+      pdfMake.createPdf(docDefinition).download(filename);
     } catch (err) {
       console.error("PDF export failed:", err);
       alert("Could not export PDF. Check the console for details.");
     }
   };
-
   const exportMarkdown = async () => {
     try {
       const markdown = await marked.parse(editor.getHTML());
@@ -120,14 +135,13 @@ const RichTextEditor = ({ content, setContent }) => {
       const href = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = href;
-      a.download = 'note.md';
+      a.download = `${sanitizeFilename(title)}.md`;
       a.click();
     } catch (error) {
       console.error('Error exporting Markdown:', error);
       alert('Failed to export as Markdown');
     }
   };
-
   const exportJSON = () => {
     try {
       const json = JSON.stringify({ content: editor.getHTML() });
@@ -135,7 +149,7 @@ const RichTextEditor = ({ content, setContent }) => {
       const href = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = href;
-      a.download = 'note.json';
+      a.download = `${sanitizeFilename(title)}.json`;
       a.click();
     } catch (error) {
       console.error('Error exporting JSON:', error);
