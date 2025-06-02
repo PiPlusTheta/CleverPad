@@ -193,7 +193,7 @@ export default function NotesApp() {
   );
 
   return (
-    <div className="min-h-screen bg-chatgpt-bg-primary text-chatgpt-text-primary flex">
+    <div className="h-screen overflow-hidden bg-chatgpt-bg-primary text-chatgpt-text-primary flex">
       {/* Sidebar Overlay for Mobile */}
       {sidebarOpen && (
         <div
@@ -255,7 +255,7 @@ export default function NotesApp() {
           {/* Sidebar content: Only show when expanded */}
           {sidebarOpen && (
             <div className="flex flex-col h-full overflow-hidden">
-              <div className="flex-1 overflow-x-auto custom-scrollbar p-4 space-y-4">
+              <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-4">
                 <SidebarHeader addNote={addNote} />
                 <NotesSearch search={search} setSearch={setSearch} />
                 <NotesList
@@ -284,7 +284,7 @@ export default function NotesApp() {
       {/* ──────────────────────────────────────────────────────────────────────── */}
       {/* Main Content */}
       {/* ──────────────────────────────────────────────────────────────────────── */}
-      <main className="flex-1 flex flex-col bg-chatgpt-bg-primary min-h-screen transition-all duration-300 ease-in-out">
+      <main className="flex-1 flex flex-col min-h-0 overflow-hidden bg-chatgpt-bg-primary transition-all duration-300 ease-in-out">
         {/* Mobile Header Bar */}
         <div className="lg:hidden flex items-center justify-between p-4 bg-chatgpt-bg-secondary border-b border-chatgpt-border">
           <button
@@ -297,8 +297,8 @@ export default function NotesApp() {
         </div>
 
         {/* Content */}
-        <div className="flex-1 flex">          {/* Editor Area */}
-          <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex min-h-0">         {/* Editor Area */}
+          <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
             {activeId !== null ? (
               <div className="flex-1 bg-chatgpt-bg-primary">
                 <NoteEditor
@@ -321,9 +321,7 @@ export default function NotesApp() {
           {/* ──────────────────────────────────────────────────────────────────── */}
           {user && (
             <div
-              className={`hidden xl:flex flex-col bg-chatgpt-bg-secondary border-l border-chatgpt-border transition-all duration-300 ease-in-out ${
-                rightSidebarOpen ? "w-64" : "w-16"
-              }`}
+              className={`hidden xl:flex flex-col h-full min-h-0 overflow-y-auto bg-chatgpt-bg-secondary border-l border-chatgpt-border transition-all duration-300 ease-in-out ${rightSidebarOpen ? "w-64" : "w-16"}`}
             >              {/* Header with collapse/expand control */}
               <div className="flex items-center justify-between p-2 border-b border-chatgpt-border">
                 {rightSidebarOpen && (
@@ -349,24 +347,25 @@ export default function NotesApp() {
                     <BarChart3 className="w-5 h-5 text-chatgpt-text-secondary" />
                   </div>
                 </div>
-              )}
-
-              {rightSidebarOpen && (
-                <div className="p-4 overflow-y-auto custom-scrollbar flex-1 space-y-4">
-                  <NotesStatistics 
-                    notes={notes} 
-                    activeNote={activeId ? notes.find(n => n.id === activeId) : null}
-                    search={search}
-                  />
-                  
-                  {/* Profile Section */}
-                  <div>
+              )}              {rightSidebarOpen && (
+                <div className="flex-1 flex flex-col h-full min-h-0">
+                  {/* Profile Section - Fixed height */}
+                  <div className="flex-shrink-0 p-4 border-b border-chatgpt-border">
                     <h3 className="text-xs font-semibold text-chatgpt-text-primary mb-2 px-1">Profile</h3>
                     <Profile user={user} onLogout={handleLogout} />
                   </div>
                   
-                  {/* Quick Actions */}
-                  <div>
+                  {/* Statistics Section - Flexible, fills remaining space */}
+                  <div className="flex-1 min-h-0 p-4">
+                    <NotesStatistics 
+                      notes={notes} 
+                      activeNote={activeId ? notes.find(n => n.id === activeId) : null}
+                      search={search}
+                    />
+                  </div>
+                  
+                  {/* Quick Actions - Fixed at bottom */}
+                  <div className="flex-shrink-0 p-4 border-t border-chatgpt-border">
                     <h3 className="text-xs font-semibold text-chatgpt-text-primary mb-2 px-1">Quick Actions</h3>
                     <div className="space-y-2">
                       <button className="w-full text-left p-2 rounded-lg hover:bg-chatgpt-bg-element transition-colors duration-200 text-xs text-chatgpt-text-secondary hover:text-chatgpt-text-primary">
