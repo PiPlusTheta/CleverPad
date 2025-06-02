@@ -1,7 +1,13 @@
 import React from "react";
+
 export function Card({ className = "", children }) {
-  return <div className={`bg-white dark:bg-zinc-900 border rounded-lg shadow ${className}`}>{children}</div>;
+  return (
+    <div className={`bg-chatgpt-bg-element border border-chatgpt-border rounded-lg shadow-sm ${className}`}>
+      {children}
+    </div>
+  );
 }
+
 export function CardContent({ className = "", children }) {
-  return <div className={className}>{children}</div>;
+  return <div className={`p-6 ${className}`}>{children}</div>;
 }

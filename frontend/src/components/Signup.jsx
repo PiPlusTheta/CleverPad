@@ -1,4 +1,7 @@
 import React, { useState } from "react";
+import { UserPlus, AlertCircle, Loader2 } from "lucide-react";
+import { Input } from "./ui/input";
+import { Button } from "./ui/button";
 
 export default function Signup({ onSignup, switchToLogin }) {
   const [name, setName] = useState("");
@@ -43,42 +46,96 @@ export default function Signup({ onSignup, switchToLogin }) {
   };
 
   return (
-    <div className="p-6 bg-white dark:bg-zinc-900 rounded-2xl shadow w-80">
-      <h2 className="text-xl font-bold mb-4">Sign Up</h2>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-        <input
-          type="text"
-          placeholder="Name"
-          className="border rounded p-2"
-          value={name}
-          onChange={e => setName(e.target.value)}
-          required
-        />
-        <input
-          type="email"
-          placeholder="Email"
-          className="border rounded p-2"
-          value={email}
-          onChange={e => setEmail(e.target.value)}
-          required
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          className="border rounded p-2"
-          value={password}
-          onChange={e => setPassword(e.target.value)}
-          required
-        />
-        <button type="submit" className="bg-zinc-800 text-white rounded p-2" disabled={loading}>
-          {loading ? "Signing up..." : "Sign Up"}
-        </button>
-        {error && <div className="text-red-500 text-sm">{error}</div>}
-      </form>
-      <p className="mt-2 text-sm text-zinc-500">
-        Already have an account?{' '}
-        <button className="underline" onClick={switchToLogin}>Login</button>
-      </p>
+    <div className="w-full max-w-md mx-auto">      <div className="bg-chatgpt-bg-element border border-chatgpt-border rounded-xl shadow-sm p-8">
+        {/* Header */}
+        <div className="flex flex-col items-center text-center mb-8">
+          <div className="w-12 h-12 bg-chatgpt-bg-secondary rounded-full flex items-center justify-center mb-4">
+            <UserPlus className="w-6 h-6 text-chatgpt-text-secondary" />
+          </div>          <h1 className="text-lg font-semibold text-chatgpt-text-primary mb-2">
+            Create your account
+          </h1>
+          <p className="text-xs text-chatgpt-text-secondary">
+            Welcome! Please fill in the details to get started.
+          </p>
+        </div>        {/* Error Message */}
+        {error && (
+          <div className="mb-6 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400 flex-shrink-0" />
+            <span className="text-xs text-red-700 dark:text-red-300">{error}</span>
+          </div>
+        )}
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>            <label htmlFor="name" className="block text-xs font-medium text-chatgpt-text-primary mb-2">
+              Full name
+            </label>
+            <Input
+              id="name"
+              type="text"
+              placeholder="Enter your full name"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              required
+              disabled={loading}
+            />
+          </div>          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-chatgpt-text-primary mb-2">
+              Email address
+            </label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="Enter your email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              required
+              disabled={loading}
+            />
+          </div>
+
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium text-chatgpt-text-primary mb-2">
+              Password
+            </label>
+            <Input
+              id="password"
+              type="password"
+              placeholder="Create a password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              required
+              disabled={loading}
+            />
+          </div>
+
+          <Button 
+            type="submit" 
+            className="w-full mt-6" 
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Creating account...
+              </>
+            ) : (
+              "Create account"
+            )}
+          </Button>
+        </form>        {/* Footer */}
+        <div className="mt-6 text-center">
+          <p className="text-sm text-chatgpt-text-secondary">
+            Already have an account?{' '}
+            <button 
+              onClick={switchToLogin}
+              className="font-medium text-chatgpt-accent hover:opacity-80 transition-opacity"
+            >
+              Sign in
+            </button>
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

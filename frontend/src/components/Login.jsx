@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { Input } from "./ui/input";
+import { Button } from "./ui/button";
 
 export default function Login({ onLogin, switchToSignup, onContinueAsGuest }) {
   const [email, setEmail] = useState("");
@@ -35,42 +37,45 @@ export default function Login({ onLogin, switchToSignup, onContinueAsGuest }) {
       setLoading(false);
     }
   };
-
   return (
-    <div className="p-8 bg-white dark:bg-zinc-900 rounded-2xl shadow w-96 flex flex-col items-center gap-4">
-      <h2 className="text-2xl font-bold mb-2">Login</h2>
+    <div className="p-8 bg-chatgpt-bg-element border border-chatgpt-border rounded-2xl shadow-lg w-96 flex flex-col items-center gap-6">
+      <div className="text-center">
+        <h2 className="text-xl font-bold text-chatgpt-text-primary mb-2">Welcome back</h2>
+        <p className="text-chatgpt-text-secondary text-sm">Sign in to your account</p>
+      </div>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full">
-        <input
+        <Input
           type="email"
           placeholder="Email"
-          className="border rounded p-3 w-full"
           value={email}
           onChange={e => setEmail(e.target.value)}
           required
         />
-        <input
+        <Input
           type="password"
           placeholder="Password"
-          className="border rounded p-3 w-full"
           value={password}
           onChange={e => setPassword(e.target.value)}
           required
         />
-        <button type="submit" className="bg-zinc-800 text-white rounded p-3 font-semibold" disabled={loading}>
-          {loading ? "Logging in..." : "Login"}
-        </button>
-        {error && <div className="text-red-500 text-sm">{error}</div>}
+        <Button type="submit" disabled={loading} className="w-full">
+          {loading ? "Signing in..." : "Sign in"}
+        </Button>
+        {error && <div className="text-red-500 text-sm text-center bg-red-50 dark:bg-red-900/20 p-3 rounded-lg border border-red-200 dark:border-red-800">{error}</div>}
       </form>
-      <div className="flex flex-col items-center gap-2 w-full">
-        <button
-          className="w-full border border-zinc-300 dark:border-zinc-700 rounded p-2 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
+      <div className="flex flex-col items-center gap-3 w-full">
+        <Button
+          variant="outline"
+          className="w-full"
           onClick={onContinueAsGuest}
         >
           Continue as Guest
-        </button>
-        <p className="text-sm text-zinc-500">
+        </Button>
+        <p className="text-sm text-chatgpt-text-secondary">
           Don't have an account?{' '}
-          <button className="underline" onClick={switchToSignup}>Sign up</button>
+          <button className="text-chatgpt-accent hover:underline font-medium" onClick={switchToSignup}>
+            Sign up
+          </button>
         </p>
       </div>
     </div>

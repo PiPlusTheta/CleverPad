@@ -11,22 +11,22 @@ export default function ThemeToggle({ theme, setTheme }) {
   const renderThemeIcon = () => {
     switch (theme) {
       case "light":
-        return <Sun className="w-5 h-5" />;
+        return <Sun className="w-4 h-4" />;
       case "dark":
-        return <Moon className="w-5 h-5" />;
+        return <Moon className="w-4 h-4" />;
       default:
-        return <Monitor className="w-5 h-5" />;
+        return <Monitor className="w-4 h-4" />;
     }
   };
 
   return (
     <button
       onClick={handleToggleTheme}
-      className="flex items-center gap-2 p-2 rounded-2xl bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-300 dark:hover:bg-zinc-700 transition"
+      className="flex items-center gap-2 w-full p-3 rounded-lg bg-chatgpt-bg-element hover:bg-chatgpt-border text-chatgpt-text-secondary hover:text-chatgpt-text-primary transition-all duration-200 border border-chatgpt-border"
       aria-label="Toggle theme"
     >
       {renderThemeIcon()}
-      <span className="text-xs capitalize">{theme}</span>
+      <span className="text-xs capitalize font-medium">{theme} mode</span>
     </button>
   );
 }
