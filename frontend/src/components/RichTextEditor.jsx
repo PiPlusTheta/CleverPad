@@ -7,6 +7,9 @@ import TextStyle from '@tiptap/extension-text-style';
 import TextAlign from '@tiptap/extension-text-align';
 import Underline from '@tiptap/extension-underline';
 import Placeholder from '@tiptap/extension-placeholder';
+import BulletList from '@tiptap/extension-bullet-list';
+import OrderedList from '@tiptap/extension-ordered-list';
+import ListItem from '@tiptap/extension-list-item';
 import htmlToPdfmake from 'html-to-pdfmake';
 import pdfMake from 'pdfmake/build/pdfmake';
 import { marked } from 'marked';
@@ -53,17 +56,33 @@ const RichTextEditor = ({ content, setContent, title = "Untitled" }) => {
         ? 'bg-chatgpt-accent text-white' 
         : 'bg-chatgpt-bg-element hover:bg-chatgpt-border text-chatgpt-text-secondary hover:text-chatgpt-text-primary'
     }`;
-  };
-  const editor = useEditor({
+  };  const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        // Disable the default list extensions from StarterKit
+        bulletList: false,
+        orderedList: false,
+        listItem: false,
+      }),
+      ListItem,
+      BulletList.configure({
+        HTMLAttributes: {
+          class: 'my-bullet-list',
+        },
+      }),
+      OrderedList.configure({
+        HTMLAttributes: {
+          class: 'my-ordered-list',
+        },
+      }),
       Image,
       FontFamily,
       TextStyle,
       TextAlign.configure({
         types: ['heading', 'paragraph'],
       }),
-      Underline,      Placeholder.configure({
+      Underline,
+      Placeholder.configure({
         placeholder: 'Start typing here...',
         showOnlyWhenEditable: true,
         showOnlyCurrent: true,
@@ -71,7 +90,12 @@ const RichTextEditor = ({ content, setContent, title = "Untitled" }) => {
     ],
     content: content || '',
     onUpdate: ({ editor }) => setContent(editor.getHTML()),
-  });  // Update editor content when content prop changes
+    editorProps: {
+      attributes: {
+        class: 'prose prose-chatgpt focus:outline-none',
+      },
+    },
+  });// Update editor content when content prop changes
   useEffect(() => {
     if (editor && content !== undefined) {
       const currentContent = editor.getHTML();
@@ -140,16 +164,40 @@ const RichTextEditor = ({ content, setContent, title = "Untitled" }) => {
       console.error("PDF export failed:", err);
       alert("Could not export PDF. Check the console for details.");
     }
-  };
-  const exportMarkdown = async () => {
+  };  const exportMarkdown = () => {
     try {
-      const markdown = await marked.parse(editor.getHTML());
+      // Convert HTML to plain text markdown-like format
+      const html = editor.getHTML();
+      
+      // Basic HTML to Markdown conversion
+      let markdown = html
+        .replace(/<h1[^>]*>(.*?)<\/h1>/gi, '# $1\n\n')
+        .replace(/<h2[^>]*>(.*?)<\/h2>/gi, '## $1\n\n')
+        .replace(/<h3[^>]*>(.*?)<\/h3>/gi, '### $1\n\n')
+        .replace(/<strong[^>]*>(.*?)<\/strong>/gi, '**$1**')
+        .replace(/<b[^>]*>(.*?)<\/b>/gi, '**$1**')
+        .replace(/<em[^>]*>(.*?)<\/em>/gi, '*$1*')
+        .replace(/<i[^>]*>(.*?)<\/i>/gi, '*$1*')
+        .replace(/<u[^>]*>(.*?)<\/u>/gi, '_$1_')
+        .replace(/<s[^>]*>(.*?)<\/s>/gi, '~~$1~~')
+        .replace(/<strike[^>]*>(.*?)<\/strike>/gi, '~~$1~~')
+        .replace(/<blockquote[^>]*>(.*?)<\/blockquote>/gi, '> $1\n\n')
+        .replace(/<ul[^>]*>(.*?)<\/ul>/gi, '$1\n')
+        .replace(/<ol[^>]*>(.*?)<\/ol>/gi, '$1\n')
+        .replace(/<li[^>]*>(.*?)<\/li>/gi, '- $1\n')
+        .replace(/<p[^>]*>(.*?)<\/p>/gi, '$1\n\n')
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<[^>]*>/g, '') // Remove any remaining HTML tags
+        .replace(/\n{3,}/g, '\n\n') // Clean up excessive newlines
+        .trim();
+
       const blob = new Blob([markdown], { type: 'text/markdown' });
       const href = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = href;
       a.download = `${sanitizeFilename(title)}.md`;
       a.click();
+      URL.revokeObjectURL(href);
     } catch (error) {
       console.error('Error exporting Markdown:', error);
       alert('Failed to export as Markdown');
@@ -254,9 +302,9 @@ const RichTextEditor = ({ content, setContent, title = "Untitled" }) => {
             <Heading2 className="w-4 h-4" />
           </button>
           
-          <div className="border-r border-chatgpt-border h-6 mx-1"></div>
-            <button
+          <div className="border-r border-chatgpt-border h-6 mx-1"></div>          <button
             onClick={() => editor.chain().focus().toggleBulletList().run()}
+            disabled={!editor.can().chain().focus().toggleBulletList().run()}
             className={getButtonClasses(editor.isActive('bulletList'))}
             title="Bullet List"
           >
@@ -264,6 +312,7 @@ const RichTextEditor = ({ content, setContent, title = "Untitled" }) => {
           </button>
           <button
             onClick={() => editor.chain().focus().toggleOrderedList().run()}
+            disabled={!editor.can().chain().focus().toggleOrderedList().run()}
             className={getButtonClasses(editor.isActive('orderedList'))}
             title="Ordered List"
           >

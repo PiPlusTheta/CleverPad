@@ -109,6 +109,25 @@ body {
   opacity: 0.8;
 }
 
+/* Lists in prose */
+.prose-chatgpt ul {
+  list-style-type: disc !important;
+  margin: 1rem 0 !important;
+  padding-left: 1.5rem !important;
+}
+
+.prose-chatgpt ol {
+  list-style-type: decimal !important;
+  margin: 1rem 0 !important;
+  padding-left: 1.5rem !important;
+}
+
+.prose-chatgpt li {
+  margin: 0.25rem 0 !important;
+  color: var(--color-text-primary) !important;
+  display: list-item !important;
+}
+
 /* TipTap placeholder styling */
 .ProseMirror p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
@@ -127,4 +146,95 @@ body {
 
 .ProseMirror:focus {
   outline: none;
+}
+
+/* TipTap List Styling */
+.ProseMirror ul {
+  list-style-type: disc !important;
+  margin: 1rem 0 !important;
+  padding-left: 1.5rem !important;
+}
+
+.ProseMirror ol {
+  list-style-type: decimal !important;
+  margin: 1rem 0 !important;
+  padding-left: 1.5rem !important;
+}
+
+.ProseMirror li {
+  margin: 0.25rem 0 !important;
+  color: var(--color-text-primary) !important;
+  display: list-item !important;
+}
+
+.ProseMirror ul ul {
+  list-style-type: circle !important;
+  margin: 0.5rem 0 !important;
+}
+
+.ProseMirror ul ul ul {
+  list-style-type: square !important;
+}
+
+.ProseMirror ol ol {
+  list-style-type: lower-alpha !important;
+  margin: 0.5rem 0 !important;
+}
+
+.ProseMirror ol ol ol {
+  list-style-type: lower-roman !important;
+}
+
+/* TipTap List Classes */
+.ProseMirror .my-bullet-list {
+  list-style-type: disc !important;
+  margin: 1rem 0 !important;
+  padding-left: 1.5rem !important;
+}
+
+.ProseMirror .my-ordered-list {
+  list-style-type: decimal !important;
+  margin: 1rem 0 !important;
+  padding-left: 1.5rem !important;
+}
+
+.ProseMirror .my-list-item {
+  margin: 0.25rem 0 !important;
+  color: var(--color-text-primary) !important;
+  display: list-item !important;
+}
+
+/* Ensure lists can be properly toggled off */
+.ProseMirror p + ul,
+.ProseMirror p + ol {
+  margin-top: 0.5rem !important;
+}
+
+.ProseMirror ul + p,
+.ProseMirror ol + p {
+  margin-top: 0.5rem !important;
+}
+
+/* Fix for nested list styling */
+.ProseMirror li > p {
+  margin: 0 !important;
+}
+
+/* Ensure proper list item behavior when lists are toggled */
+.ProseMirror li {
+  position: relative;
+}
+
+/* Fix for when lists are toggled off - ensure paragraphs don't have list styling */
+.ProseMirror p {
+  list-style: none !important;
+  display: block !important;
+  margin: 0.5rem 0 !important;
+}
+
+/* Ensure nested content in lists behaves correctly */
+.ProseMirror li p {
+  list-style: none !important;
+  display: block !important;
+  margin: 0 !important;
 }
