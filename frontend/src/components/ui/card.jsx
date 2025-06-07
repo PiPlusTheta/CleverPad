@@ -9,5 +9,5 @@ export function Card({ className = "", children }) {
 }
 
 export function CardContent({ className = "", children }) {
-  return <div className={`p-6 ${className}`}>{children}</div>;
+  return <div className={`p-3 ${className}`}>{children}</div>;
 }

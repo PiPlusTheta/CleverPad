@@ -79,36 +79,34 @@ export default function NotesStatistics({ notes, activeNote, search }) {
       readingTime: Math.ceil(words / 200)
     };
   }, [activeNote]);
-
   const StatCard = ({ icon: Icon, title, value, subtitle, color = "text-chatgpt-text-primary" }) => (
     <Card className="h-full bg-chatgpt-bg-element border-chatgpt-border">
-      <CardContent className="h-full p-1 text-[10px] flex flex-col justify-between">
-        <div className="flex items-center gap-1 mb-0.5">
-          <Icon className={`w-[10px] h-[10px] ${color}`} />
-          <span className="font-medium text-chatgpt-text-primary">{title}</span>
+      <CardContent className="h-full p-0.5 text-[9px] flex flex-col justify-between">
+        <div className="flex items-center gap-0.5 mb-0">
+          <Icon className={`w-[8px] h-[8px] ${color}`} />
+          <span className="font-medium text-chatgpt-text-primary truncate">{title}</span>
         </div>
-        <div className="text-[11px] font-semibold text-chatgpt-text-primary leading-tight">{value}</div>
+        <div className="text-[10px] font-semibold text-chatgpt-text-primary leading-none">{value}</div>
         {subtitle && (
-          <div className="text-[9px] text-chatgpt-text-secondary mt-0.5">{subtitle}</div>
+          <div className="text-[8px] text-chatgpt-text-secondary mt-0 leading-none">{subtitle}</div>
         )}
       </CardContent>
     </Card>
   );
-
   return (
-    <div className="h-full flex flex-col space-y-1 min-h-0">
+    <div className="h-full flex flex-col space-y-0.5 min-h-0">
       {/* Search Results */}
       {search && stats.searchResults !== null && (
         <Card className="bg-chatgpt-bg-element border-chatgpt-border flex-shrink-0">
-          <CardContent className="p-1 text-[10px]">
-            <div className="flex items-center gap-1 mb-0.5">
-              <Search className="w-[10px] h-[10px] text-chatgpt-green" />
+          <CardContent className="p-0.5 text-[9px]">
+            <div className="flex items-center gap-0.5 mb-0">
+              <Search className="w-[8px] h-[8px] text-chatgpt-green" />
               <span className="font-medium text-chatgpt-text-primary">Search Results</span>
             </div>
-            <div className="text-[11px] font-semibold text-chatgpt-text-primary">
+            <div className="text-[10px] font-semibold text-chatgpt-text-primary">
               {stats.searchResults}
             </div>
-            <div className="text-[9px] text-chatgpt-text-secondary">
+            <div className="text-[8px] text-chatgpt-text-secondary">
               for "{search.length > 15 ? search.substring(0, 15) + '...' : search}"
             </div>
           </CardContent>
@@ -117,8 +115,8 @@ export default function NotesStatistics({ notes, activeNote, search }) {
 
       {/* Overview Stats */}
       <div className="flex-1 min-h-0 flex flex-col">
-        <h3 className="text-[10px] font-semibold text-chatgpt-text-primary mb-1 px-1 flex-shrink-0">Overview</h3>
-        <div className="grid grid-cols-2 gap-1 items-stretch flex-shrink-0">
+        <h3 className="text-[9px] font-semibold text-chatgpt-text-primary mb-0.5 px-0.5 flex-shrink-0">Overview</h3>
+        <div className="grid grid-cols-2 gap-0.5 items-stretch flex-shrink-0">
           <StatCard icon={FileText} title="Notes" value={stats.totalNotes.toLocaleString()} color="text-chatgpt-green" />
           <StatCard icon={BarChart3} title="Words" value={stats.totalWords.toLocaleString()} color="text-blue-500" />
           <StatCard icon={Calendar} title="This Week" value={stats.recentNotes.toLocaleString()} color="text-purple-500" />
@@ -128,8 +126,8 @@ export default function NotesStatistics({ notes, activeNote, search }) {
         {/* Current Note Stats */}
         {currentNoteStats && (
           <>
-            <h4 className="text-[10px] font-semibold text-chatgpt-text-primary mb-1 px-1">Current Note</h4>
-            <div className="grid grid-cols-2 gap-1 items-stretch">
+            <h4 className="text-[9px] font-semibold text-chatgpt-text-primary mb-0.5 px-0.5 mt-1">Current Note</h4>
+            <div className="grid grid-cols-2 gap-0.5 items-stretch">
               <StatCard
                 icon={FileText}
                 title="Words"
@@ -149,10 +147,10 @@ export default function NotesStatistics({ notes, activeNote, search }) {
 
       {/* Quick Facts */}
       <div className="flex-shrink-0">
-        <h4 className="text-[10px] font-semibold text-chatgpt-text-primary mb-1 px-1">Quick Facts</h4>
+        <h4 className="text-[9px] font-semibold text-chatgpt-text-primary mb-0.5 px-0.5">Quick Facts</h4>
         <Card className="bg-chatgpt-bg-element border-chatgpt-border">
-          <CardContent className="p-1 text-[10px]">
-            <div className="space-y-0.5">
+          <CardContent className="p-0.5 text-[9px]">
+            <div className="space-y-0">
               <div className="flex justify-between">
                 <span className="text-chatgpt-text-secondary">Avg Words:</span>
                 <span className="font-medium text-chatgpt-text-primary">
