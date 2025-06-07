@@ -6,6 +6,7 @@ import FontFamily from '@tiptap/extension-font-family';
 import TextStyle from '@tiptap/extension-text-style';
 import TextAlign from '@tiptap/extension-text-align';
 import Underline from '@tiptap/extension-underline';
+import Placeholder from '@tiptap/extension-placeholder';
 import htmlToPdfmake from 'html-to-pdfmake';
 import pdfMake from 'pdfmake/build/pdfmake';
 import { marked } from 'marked';
@@ -53,7 +54,6 @@ const RichTextEditor = ({ content, setContent, title = "Untitled" }) => {
         : 'bg-chatgpt-bg-element hover:bg-chatgpt-border text-chatgpt-text-secondary hover:text-chatgpt-text-primary'
     }`;
   };
-  
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -63,17 +63,20 @@ const RichTextEditor = ({ content, setContent, title = "Untitled" }) => {
       TextAlign.configure({
         types: ['heading', 'paragraph'],
       }),
-      Underline,
+      Underline,      Placeholder.configure({
+        placeholder: 'Start typing here...',
+        showOnlyWhenEditable: true,
+        showOnlyCurrent: true,
+      }),
     ],
-    content: content || '<p>Start typing here...</p>',
+    content: content || '',
     onUpdate: ({ editor }) => setContent(editor.getHTML()),
-  });
-  // Update editor content when content prop changes
+  });  // Update editor content when content prop changes
   useEffect(() => {
     if (editor && content !== undefined) {
       const currentContent = editor.getHTML();
       if (currentContent !== content) {
-        editor.commands.setContent(content || '<p>Start typing here...</p>');
+        editor.commands.setContent(content || '');
       }
     }
   }, [editor, content]);
@@ -200,7 +203,8 @@ const RichTextEditor = ({ content, setContent, title = "Untitled" }) => {
   return (
     <div className="flex flex-col h-full bg-chatgpt-bg-element rounded-lg border border-chatgpt-border shadow-sm">
       {/* Sticky Toolbar */}
-      <div className="sticky top-0 z-10 bg-chatgpt-bg-secondary border-b border-chatgpt-border py-2 px-3 flex flex-wrap items-center gap-1">        <div className="flex flex-wrap gap-1">
+      <div className="flex-shrink-0 sticky top-0 z-10 bg-chatgpt-bg-secondary border-b border-chatgpt-border py-2 px-3 flex flex-wrap items-center gap-1">
+        <div className="flex flex-wrap gap-1">
           <button
             onClick={() => editor.chain().focus().toggleBold().run()}
             disabled={!editor.can().chain().focus().toggleBold().run()}
@@ -389,21 +393,19 @@ const RichTextEditor = ({ content, setContent, title = "Untitled" }) => {
           </button>
         </div>
       </div>      {/* Editor + Preview */}
-      <div className="flex flex-1 overflow-hidden flex-col md:flex-row gap-4 p-4">
+      <div className="flex flex-1 min-h-0 overflow-hidden flex-col md:flex-row">
         <div 
-          className={`overflow-y-auto ${showPreview ? 'md:w-1/2' : 'w-full'} border border-chatgpt-border rounded-lg bg-chatgpt-bg-primary custom-scrollbar`}
-          style={{ minHeight: '300px' }}
+          className={`flex flex-col flex-1 min-h-0 overflow-hidden ${showPreview ? 'md:w-1/2' : 'w-full'} border-r ${showPreview ? 'md:border-r-chatgpt-border' : 'border-r-0'}`}
         >
           <EditorContent 
             editor={editor} 
-            className="min-h-[300px] p-4 focus:outline-none text-chatgpt-text-primary prose prose-chatgpt max-w-none" 
+            className="flex-1 min-h-0 p-4 focus:outline-none text-chatgpt-text-primary prose prose-chatgpt max-w-none overflow-y-auto custom-scrollbar" 
           />
         </div>
 
         {showPreview && (
           <div 
-            className="flex-1 md:w-1/2 bg-chatgpt-bg-secondary p-4 rounded-lg overflow-auto text-sm prose prose-chatgpt border border-chatgpt-border custom-scrollbar"
-            style={{ minHeight: '300px' }}
+            className="flex-1 md:w-1/2 bg-chatgpt-bg-secondary p-4 overflow-auto text-sm prose prose-chatgpt custom-scrollbar min-h-0"
           >
             <div dangerouslySetInnerHTML={{ __html: previewContent }} />
           </div>

@@ -297,10 +297,9 @@ export default function NotesApp() {
         </div>
 
         {/* Content */}
-        <div className="flex-1 flex min-h-0">         {/* Editor Area */}
-          <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
+        <div className="flex-1 flex min-h-0">         {/* Editor Area */}          <div className="flex-1 flex flex-col min-h-0">
             {activeId !== null ? (
-              <div className="flex-1 bg-chatgpt-bg-primary">
+              <div className="flex-1 h-full bg-chatgpt-bg-primary">
                 <NoteEditor
                   titleDraft={titleDraft}
                   setTitleDraft={setTitleDraft}

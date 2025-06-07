@@ -15,9 +15,9 @@ export default function NoteEditor({
   activeId
 }) {
   return (
-    <div className="flex flex-col h-full p-6 gap-4">
+    <div className="flex flex-col h-full">
       {/* Header with Title and Actions */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 p-6 pb-0">
         <Input
           value={titleDraft}
           onChange={e => setTitleDraft(e.target.value)}
@@ -39,12 +39,10 @@ export default function NoteEditor({
         </Button>
       </div>
 
-      {/* Editor Card */}
-      <Card className="flex flex-col flex-1 overflow-hidden">
-        <CardContent className="flex flex-col flex-1 p-0 overflow-hidden">
-          <RichTextEditor content={draft} setContent={setDraft} title={titleDraft} />
-        </CardContent>
-      </Card>
+      {/* Editor */}
+      <div className="flex-1 overflow-hidden px-6 pb-6 pt-4">
+        <RichTextEditor content={draft} setContent={setDraft} title={titleDraft} />
+      </div>
     </div>
   );
 }

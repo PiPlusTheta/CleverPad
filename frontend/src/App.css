@@ -1,7 +1,7 @@
 #root {
   margin: 0 auto;
   padding-top: 0rem;
-  padding-right: 11rem;
+  padding-right: 0rem;
   padding-bottom: 0rem;
   padding-left: 0rem;
   text-align: center;
@@ -33,10 +33,6 @@
   a:nth-of-type(2) .logo {
     animation: logo-spin infinite 20s linear;
   }
-}
-
-.card {
-  padding: 2em;
 }
 
 .read-the-docs {
