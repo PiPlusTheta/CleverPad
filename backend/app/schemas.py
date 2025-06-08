@@ -24,6 +24,11 @@ class Token(BaseModel):
     token_type: str = "bearer"
 
 
+class GuestSession(BaseModel):
+    session_id: str
+    token_type: str = "guest"
+
+
 # ──────────────────────────────────────────────────
 # Notes
 # ──────────────────────────────────────────────────
@@ -38,6 +43,7 @@ class NoteCreate(NoteBase):
 
 class NoteOut(NoteBase):
     id: int
-    owner_id: int
+    owner_id: Optional[int] = None
+    session_id: Optional[str] = None
 
     model_config = {"from_attributes": True}

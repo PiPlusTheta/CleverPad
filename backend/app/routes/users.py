@@ -31,6 +31,14 @@ def login(
 
 
 # ──────────────────────────────────────────────────
+@router.post("/guest", response_model=schemas.GuestSession)
+def guest_login():
+    """Create a guest session for unauthenticated users"""
+    session_id = crud.generate_guest_session_id()
+    return {"session_id": session_id, "token_type": "guest"}
+
+
+# ──────────────────────────────────────────────────
 @router.get("/me", response_model=schemas.UserOut)
 def read_current_user(current_user=Depends(get_current_user)):
     return current_user

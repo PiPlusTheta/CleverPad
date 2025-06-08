@@ -20,7 +20,8 @@ class Note(Base):
     title = Column(String, default="Untitled")
     content = Column(Text, default="")
     owner_id = Column(
-        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=True  # Allow null for guest notes
     )
+    session_id = Column(String, nullable=True)  # For guest session identification
 
     owner = relationship("User", back_populates="notes")
