@@ -1,10 +1,15 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Menu,
   X,
   ChevronLeft,
   ChevronRight,
-  BarChart3
+  BarChart3,
+  Download,
+  Upload,
+  Settings,
+  FileDown,
+  FolderOpen
 } from "lucide-react";
 import SidebarHeader from "./components/SidebarHeader";
 import NotesSearch from "./components/NotesSearch";
@@ -17,6 +22,7 @@ import Signup from "./components/Signup";
 import Profile from "./components/Profile";
 import ThemeToggle from "./components/ThemeToggle";
 import NotesStatistics from "./components/NotesStatistics";
+import { ToastContainer } from "./components/Toast";
 
 export default function NotesApp() {
   // ──────────────────────────────────────────────────────────────────────────────
@@ -32,12 +38,18 @@ export default function NotesApp() {
   const [activeId, setActiveId] = useState(null);
   const [draft, setDraft] = useState("");
   const [titleDraft, setTitleDraft] = useState("");
-  const [search, setSearch] = useState("");
-
-  // ──────────────────────────────────────────────────────────────────────────────
+  const [search, setSearch] = useState("");  // ──────────────────────────────────────────────────────────────────────────────
   // Theme state ("light" | "dark" | "system")
   // ──────────────────────────────────────────────────────────────────────────────
   const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "system");
+
+  // ──────────────────────────────────────────────────────────────────────────────
+  // Quick Actions state
+  // ──────────────────────────────────────────────────────────────────────────────
+  const [showSettings, setShowSettings] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const importAllNotesRef = useRef();
 
   useEffect(() => {
     const root = document.documentElement;
@@ -47,6 +59,48 @@ export default function NotesApp() {
     root.classList.toggle("dark", shouldDark);
     localStorage.setItem("theme", theme);
   }, [theme]);
+
+  // ──────────────────────────────────────────────────────────────────────────────
+  // Keyboard shortcuts for Quick Actions
+  // ──────────────────────────────────────────────────────────────────────────────
+  useEffect(() => {
+    const handleKeydown = (event) => {
+      // Check if Ctrl (or Cmd on Mac) is pressed
+      const isCtrlOrCmd = event.ctrlKey || event.metaKey;
+      
+      if (isCtrlOrCmd) {
+        switch (event.key) {
+          case 'e':
+            // Ctrl+E or Cmd+E: Export all notes
+            if (notes.length > 0 && !isExporting) {
+              event.preventDefault();
+              exportAllNotesAsZip();
+            }
+            break;
+          case 'i':
+            // Ctrl+I or Cmd+I: Import notes
+            if (!isImporting) {
+              event.preventDefault();
+              importAllNotesRef.current?.click();
+            }
+            break;
+          case ',':
+            // Ctrl+, or Cmd+,: Open settings (common convention)
+            event.preventDefault();
+            setShowSettings(true);
+            break;
+          default:
+            break;
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeydown);
+    
+    return () => {
+      document.removeEventListener('keydown', handleKeydown);
+    };
+  }, [notes.length, isExporting, isImporting]);
 
   // ──────────────────────────────────────────────────────────────────────────────
   // Auth state
@@ -274,11 +328,238 @@ export default function NotesApp() {
     setTitleDraft(note.title);
     setDraft(note.content);
   };
-
   const showWelcomeScreen = () => {
     setActiveId(null);
     setTitleDraft("");
     setDraft("");
+  };
+  // ──────────────────────────────────────────────────────────────────────────────
+  // Quick Actions functionality  // ──────────────────────────────────────────────────────────────────────────────
+  const exportAllNotesAsZip = async () => {
+    if (notes.length === 0) {
+      alert('No notes to export');
+      return;
+    }
+
+    setIsExporting(true);
+    try {
+      // Import JSZip dynamically
+      const JSZip = (await import('jszip')).default;
+      
+      const zip = new JSZip();
+      const notesFolder = zip.folder("CleverPad_Notes");
+      
+      // Helper function to sanitize filename
+      const sanitizeFilename = (name) => {
+        return name.replace(/[<>:"/\\|?*]/g, '_').trim();
+      };
+
+      // Create a summary file
+      let summary = `# CleverPad Export Summary\n\n`;
+      summary += `**Export Date:** ${new Date().toLocaleString()}\n`;
+      summary += `**Total Notes:** ${notes.length}\n`;
+      summary += `**User:** ${user?.name || 'Guest'}\n\n`;
+      summary += `## Notes List\n\n`;
+
+      notes.forEach((note, index) => {
+        const title = note.title || `Untitled_${index + 1}`;
+        const sanitizedTitle = sanitizeFilename(title);
+        
+        // Add to summary
+        summary += `${index + 1}. **${title}**\n`;
+        summary += `   - Created: ${new Date(note.created_at).toLocaleString()}\n`;
+        summary += `   - Modified: ${new Date(note.updated_at).toLocaleString()}\n`;
+        summary += `   - Word Count: ${note.content.replace(/<[^>]*>/g, '').split(/\s+/).filter(w => w).length}\n\n`;
+        
+        // Export as markdown
+        let markdown = note.content
+          .replace(/<h1[^>]*>(.*?)<\/h1>/gi, '# $1\n\n')
+          .replace(/<h2[^>]*>(.*?)<\/h2>/gi, '## $1\n\n')
+          .replace(/<h3[^>]*>(.*?)<\/h3>/gi, '### $1\n\n')
+          .replace(/<h4[^>]*>(.*?)<\/h4>/gi, '#### $1\n\n')
+          .replace(/<h5[^>]*>(.*?)<\/h5>/gi, '##### $1\n\n')
+          .replace(/<h6[^>]*>(.*?)<\/h6>/gi, '###### $1\n\n')
+          .replace(/<strong[^>]*>(.*?)<\/strong>/gi, '**$1**')
+          .replace(/<b[^>]*>(.*?)<\/b>/gi, '**$1**')
+          .replace(/<em[^>]*>(.*?)<\/em>/gi, '*$1*')
+          .replace(/<i[^>]*>(.*?)<\/i>/gi, '*$1*')
+          .replace(/<u[^>]*>(.*?)<\/u>/gi, '$1')
+          .replace(/<del[^>]*>(.*?)<\/del>/gi, '~~$1~~')
+          .replace(/<blockquote[^>]*>(.*?)<\/blockquote>/gi, '> $1\n\n')
+          .replace(/<ul[^>]*>(.*?)<\/ul>/gi, '$1\n')
+          .replace(/<ol[^>]*>(.*?)<\/ol>/gi, '$1\n')
+          .replace(/<li[^>]*>(.*?)<\/li>/gi, '- $1\n')
+          .replace(/<p[^>]*>(.*?)<\/p>/gi, '$1\n\n')
+          .replace(/<br\s*\/?>/gi, '\n')
+          .replace(/<[^>]*>/g, '')
+          .replace(/\n{3,}/g, '\n\n')
+          .trim();
+        
+        // Add metadata header to markdown file
+        const markdownWithMetadata = `---
+title: "${title}"
+created: ${note.created_at}
+updated: ${note.updated_at}
+exported: ${new Date().toISOString()}
+---
+
+# ${title}
+
+${markdown}`;
+        
+        notesFolder.file(`${sanitizedTitle}.md`, markdownWithMetadata);
+        
+        // Also export as JSON with metadata
+        const noteData = {
+          title: note.title,
+          content: note.content,
+          created_at: note.created_at,
+          updated_at: note.updated_at,
+          exported_at: new Date().toISOString(),
+          word_count: note.content.replace(/<[^>]*>/g, '').split(/\s+/).filter(w => w).length
+        };
+        notesFolder.file(`${sanitizedTitle}.json`, JSON.stringify(noteData, null, 2));
+      });
+
+      // Add summary file
+      zip.file("README.md", summary);
+
+      // Generate and download zip
+      const content = await zip.generateAsync({ 
+        type: "blob",
+        compression: "DEFLATE",
+        compressionOptions: {
+          level: 6
+        }
+      });
+      
+      const href = URL.createObjectURL(content);
+      const a = document.createElement('a');
+      a.href = href;
+      a.download = `CleverPad_Export_${new Date().toISOString().split('T')[0]}.zip`;
+      a.click();
+      URL.revokeObjectURL(href);
+        alert(`Successfully exported ${notes.length} notes with summary!`);
+    } catch (error) {
+      console.error('Error exporting notes:', error);
+      alert('Failed to export notes. Make sure you have an internet connection for the first export.');
+    } finally {
+      setIsExporting(false);
+    }
+  };  const importAllNotes = async (event) => {
+    const files = Array.from(event.target.files);
+    if (files.length === 0) return;
+
+    setIsImporting(true);
+    let successCount = 0;
+    let errorCount = 0;
+    const maxFiles = 50; // Limit to prevent overwhelming the system
+
+    if (files.length > maxFiles) {
+      alert(`Too many files selected. Please select no more than ${maxFiles} files at once.`);
+      setIsImporting(false);
+      return;
+    }
+
+    // Show progress for large imports
+    if (files.length > 5) {
+      console.log(`Starting import of ${files.length} files...`);
+    }
+
+    for (const file of files) {
+      try {
+        await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = async (ev) => {
+            try {
+              let htmlContent = '';
+              let importedTitle = file.name.replace(/\.(md|json)$/, '');
+              
+              if (file.name.endsWith('.md')) {
+                // Import marked dynamically
+                const { marked } = await import('marked');
+                const markdownContent = ev.target.result;
+                
+                // Extract title from markdown if available
+                const titleMatch = markdownContent.match(/^#\s+(.+)$/m);
+                if (titleMatch) {
+                  importedTitle = titleMatch[1].trim();
+                }
+                
+                htmlContent = await marked.parse(markdownContent);
+              } else if (file.name.endsWith('.json')) {
+                const jsonData = JSON.parse(ev.target.result);
+                htmlContent = jsonData.content || '';
+                importedTitle = jsonData.title || importedTitle;
+              } else {
+                reject(new Error('Unsupported file type'));
+                return;
+              }
+
+              // Ensure we don't import empty notes
+              if (!htmlContent.trim() && !importedTitle.trim()) {
+                reject(new Error('Empty note content'));
+                return;
+              }
+
+              // Create new note
+              if (user?.token) {
+                // Authenticated user
+                const res = await fetch("http://localhost:8000/notes/", {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${user.token}`
+                  },
+                  body: JSON.stringify({ title: importedTitle, content: htmlContent })
+                });
+                
+                if (!res.ok) {
+                  throw new Error(`Server error: ${res.status}`);
+                }
+                
+                const newNote = await res.json();
+                setNotes((prev) => [newNote, ...prev]);
+              } else if (user?.name === "Guest") {
+                // Guest user
+                const newNote = {
+                  id: Date.now().toString() + Math.random(),
+                  title: importedTitle,
+                  content: htmlContent,
+                  created_at: new Date().toISOString(),
+                  updated_at: new Date().toISOString()
+                };
+                setNotes((prev) => [newNote, ...prev]);
+              }
+              
+              successCount++;
+              resolve();
+            } catch (error) {
+              reject(error);
+            }
+          };
+          reader.onerror = reject;
+          reader.readAsText(file);
+        });
+      } catch (error) {
+        console.error(`Error importing ${file.name}:`, error);
+        errorCount++;
+      }
+    }
+
+    // Reset file input
+    event.target.value = '';
+    
+    // Show detailed result
+    if (successCount > 0 && errorCount === 0) {
+      alert(`Successfully imported ${successCount} notes!`);
+    } else if (successCount > 0 && errorCount > 0) {
+      alert(`Import completed: ${successCount} successful, ${errorCount} failed.\nCheck console for error details.`);
+    } else {
+      alert('Failed to import any notes. Please check the file formats and try again.');
+    }
+    
+    setIsImporting(false);
   };
 
   const filteredNotes = notes.filter(
@@ -456,22 +737,55 @@ export default function NotesApp() {
                       activeNote={activeId ? notes.find(n => n.id === activeId) : null}
                       search={search}
                     />
-                  </div>
-                  
-                  {/* Quick Actions - Fixed at bottom */}
+                  </div>                    {/* Quick Actions - Fixed at bottom */}
                   <div className="flex-shrink-0 p-4 border-t border-chatgpt-border">
                     <h3 className="text-xs font-semibold text-chatgpt-text-primary mb-2 px-1">Quick Actions</h3>
                     <div className="space-y-2">
-                      <button className="w-full text-left p-2 rounded-lg hover:bg-chatgpt-bg-element transition-colors duration-200 text-xs text-chatgpt-text-secondary hover:text-chatgpt-text-primary">
-                        Export All Notes
+                      <button 
+                        onClick={exportAllNotesAsZip}
+                        disabled={notes.length === 0 || isExporting}
+                        className={`w-full text-left p-2 rounded-lg transition-colors duration-200 text-xs flex items-center gap-2 ${
+                          notes.length === 0 || isExporting
+                            ? 'opacity-50 cursor-not-allowed text-chatgpt-text-secondary'
+                            : 'hover:bg-chatgpt-bg-element text-chatgpt-text-secondary hover:text-chatgpt-text-primary'
+                        }`}
+                        title={notes.length === 0 ? 'No notes to export' : 'Export all notes as ZIP'}
+                      >
+                        <Download className="w-3 h-3" />
+                        {isExporting ? 'Exporting...' : 'Export All Notes'}
                       </button>
-                      <button className="w-full text-left p-2 rounded-lg hover:bg-chatgpt-bg-element transition-colors duration-200 text-xs text-chatgpt-text-secondary hover:text-chatgpt-text-primary">
-                        Import Notes
+                      <button 
+                        onClick={() => importAllNotesRef.current?.click()}
+                        disabled={isImporting}
+                        className={`w-full text-left p-2 rounded-lg transition-colors duration-200 text-xs flex items-center gap-2 ${
+                          isImporting
+                            ? 'opacity-50 cursor-not-allowed text-chatgpt-text-secondary'
+                            : 'hover:bg-chatgpt-bg-element text-chatgpt-text-secondary hover:text-chatgpt-text-primary'
+                        }`}
+                        title="Import multiple .md or .json files"
+                      >
+                        <Upload className="w-3 h-3" />
+                        {isImporting ? 'Importing...' : 'Import Notes'}
                       </button>
-                      <button className="w-full text-left p-2 rounded-lg hover:bg-chatgpt-bg-element transition-colors duration-200 text-xs text-chatgpt-text-secondary hover:text-chatgpt-text-primary">
+                      <button 
+                        onClick={() => setShowSettings(true)}
+                        className="w-full text-left p-2 rounded-lg hover:bg-chatgpt-bg-element transition-colors duration-200 text-xs text-chatgpt-text-secondary hover:text-chatgpt-text-primary flex items-center gap-2"
+                        title="Open application settings"
+                      >
+                        <Settings className="w-3 h-3" />
                         Settings
                       </button>
                     </div>
+                    
+                    {/* Hidden file input for importing multiple notes */}
+                    <input
+                      type="file"
+                      accept=".md,.json"
+                      multiple
+                      ref={importAllNotesRef}
+                      onChange={importAllNotes}
+                      style={{ display: 'none' }}
+                    />
                   </div>
                 </div>
               )}
@@ -503,6 +817,175 @@ export default function NotesApp() {
                 switchToLogin={() => setAuthMode("login")}
               />
             )}
+          </div>
+        </div>
+      )}      {/* Settings Modal */}
+      {showSettings && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50 p-4">
+          <div className="bg-chatgpt-bg-primary rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto border border-chatgpt-border">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold text-chatgpt-text-primary">Settings</h2>
+                <button
+                  onClick={() => setShowSettings(false)}
+                  className="p-2 rounded-lg hover:bg-chatgpt-bg-element transition-colors duration-200"
+                >
+                  <X className="w-5 h-5 text-chatgpt-text-secondary" />
+                </button>
+              </div>
+              
+              <div className="space-y-6">
+                {/* Theme Settings */}
+                <div>
+                  <h3 className="text-sm font-medium text-chatgpt-text-primary mb-3">Appearance</h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-chatgpt-text-secondary">Theme</span>
+                      <ThemeToggle theme={theme} setTheme={setTheme} />
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Data Management */}
+                <div>
+                  <h3 className="text-sm font-medium text-chatgpt-text-primary mb-3">Data Management</h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-sm text-chatgpt-text-secondary">Total Notes</div>
+                        <div className="text-xs text-chatgpt-text-secondary opacity-70">{notes.length} notes stored</div>
+                      </div>
+                      <span className="text-sm font-medium text-chatgpt-text-primary">{notes.length}</span>
+                    </div>
+                    
+                    {user?.name === "Guest" && (
+                      <div className="p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
+                        <div className="text-sm text-orange-800 dark:text-orange-200 font-medium mb-1">Guest Mode</div>
+                        <div className="text-xs text-orange-600 dark:text-orange-300">
+                          Your notes are stored locally. Create an account to sync across devices.
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                  {/* Export Options */}
+                <div>
+                  <h3 className="text-sm font-medium text-chatgpt-text-primary mb-3">Export & Import</h3>
+                  <div className="space-y-2">
+                    <button 
+                      onClick={() => {
+                        exportAllNotesAsZip();
+                        setShowSettings(false);
+                      }}
+                      disabled={notes.length === 0 || isExporting}
+                      className={`w-full text-left p-3 rounded-lg transition-colors duration-200 text-sm flex items-center gap-3 ${
+                        notes.length === 0 || isExporting
+                          ? 'opacity-50 cursor-not-allowed text-chatgpt-text-secondary'
+                          : 'hover:bg-chatgpt-bg-element text-chatgpt-text-secondary hover:text-chatgpt-text-primary'
+                      }`}
+                    >
+                      <FileDown className="w-4 h-4" />
+                      <div>
+                        <div className="font-medium">
+                          {isExporting ? 'Exporting...' : 'Export All Notes'}
+                        </div>
+                        <div className="text-xs opacity-70">
+                          {notes.length === 0 
+                            ? 'No notes available to export' 
+                            : `Download ${notes.length} notes as ZIP archive`
+                          }
+                        </div>
+                      </div>
+                    </button>
+                    <button 
+                      onClick={() => {
+                        importAllNotesRef.current?.click();
+                        setShowSettings(false);
+                      }}
+                      disabled={isImporting}
+                      className={`w-full text-left p-3 rounded-lg transition-colors duration-200 text-sm flex items-center gap-3 ${
+                        isImporting
+                          ? 'opacity-50 cursor-not-allowed text-chatgpt-text-secondary'
+                          : 'hover:bg-chatgpt-bg-element text-chatgpt-text-secondary hover:text-chatgpt-text-primary'
+                      }`}
+                    >
+                      <FolderOpen className="w-4 h-4" />
+                      <div>
+                        <div className="font-medium">
+                          {isImporting ? 'Importing...' : 'Import Notes'}
+                        </div>
+                        <div className="text-xs opacity-70">Import multiple .md or .json files</div>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+                  {/* Storage Information */}
+                <div>
+                  <h3 className="text-sm font-medium text-chatgpt-text-primary mb-3">Storage</h3>
+                  <div className="space-y-3">
+                    <div className="p-3 bg-chatgpt-bg-element rounded-lg">
+                      <div className="text-xs text-chatgpt-text-secondary space-y-1">
+                        <div className="flex justify-between">
+                          <span>Storage Type:</span>
+                          <span className="font-medium">
+                            {user?.name === "Guest" ? "Local Browser" : "Cloud Sync"}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Notes Count:</span>
+                          <span className="font-medium">{notes.length}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Total Size:</span>
+                          <span className="font-medium">
+                            {(JSON.stringify(notes).length / 1024).toFixed(1)} KB
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Keyboard Shortcuts */}
+                <div>
+                  <h3 className="text-sm font-medium text-chatgpt-text-primary mb-3">Keyboard Shortcuts</h3>
+                  <div className="space-y-2">
+                    <div className="p-3 bg-chatgpt-bg-element rounded-lg">
+                      <div className="text-xs text-chatgpt-text-secondary space-y-2">
+                        <div className="flex justify-between items-center">
+                          <span>Export All Notes</span>
+                          <code className="px-2 py-1 bg-chatgpt-bg-primary rounded text-xs font-mono">
+                            {navigator.platform.includes('Mac') ? '⌘E' : 'Ctrl+E'}
+                          </code>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span>Import Notes</span>
+                          <code className="px-2 py-1 bg-chatgpt-bg-primary rounded text-xs font-mono">
+                            {navigator.platform.includes('Mac') ? '⌘I' : 'Ctrl+I'}
+                          </code>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span>Open Settings</span>
+                          <code className="px-2 py-1 bg-chatgpt-bg-primary rounded text-xs font-mono">
+                            {navigator.platform.includes('Mac') ? '⌘,' : 'Ctrl+,'}
+                          </code>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* App Info */}
+                <div className="pt-4 border-t border-chatgpt-border">
+                  <div className="text-center">
+                    <div className="text-sm font-medium text-chatgpt-text-primary mb-1">CleverPad</div>
+                    <div className="text-xs text-chatgpt-text-secondary">
+                      A modern note-taking application
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
