@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback, useRef, useEffect } from "react";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
@@ -12,8 +12,26 @@ export default function NoteEditor({
   setDraft,
   saveNote,
   deleteNote,
-  activeId
+  activeId,
+  onCreateNoteFromImport
 }) {
+  const saveTimeoutRef = useRef(null);
+
+  // Auto-save when content changes (debounced)
+  const handleContentChange = useCallback((newContent) => {
+    setDraft(newContent);
+    
+    // Clear existing timeout
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    
+    // Set new timeout to save after 1 second of no changes
+    saveTimeoutRef.current = setTimeout(() => {
+      saveNote();
+    }, 1000);
+  }, [setDraft, saveNote]);
+
   return (
     <div className="flex flex-col h-full">
       {/* Header with Title and Actions */}
@@ -40,8 +58,13 @@ export default function NoteEditor({
       </div>
 
       {/* Editor */}
-      <div className="flex-1 overflow-hidden px-6 pb-6 pt-4">
-        <RichTextEditor content={draft} setContent={setDraft} title={titleDraft} />
+      <div className="flex-1 overflow-hidden px-6 pb-6 pt-4">        <RichTextEditor 
+          content={draft} 
+          setContent={setDraft} 
+          title={titleDraft}
+          onContentChange={handleContentChange}
+          onCreateNoteFromImport={onCreateNoteFromImport}
+        />
       </div>
     </div>
   );

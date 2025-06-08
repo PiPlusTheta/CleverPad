@@ -39,12 +39,17 @@ import {
   AlignJustify,
 } from 'lucide-react';
 import pdfFonts from 'pdfmake/build/vfs_fonts';
-pdfMake.vfs = pdfFonts?.pdfMake?.vfs;
+// Fix for pdfMake fonts
+if (pdfFonts && pdfFonts.pdfMake && pdfFonts.pdfMake.vfs) {
+  pdfMake.vfs = pdfFonts.pdfMake.vfs;
+} else if (pdfFonts) {
+  pdfMake.vfs = pdfFonts;
+}
 
 // Configure marked to use async rendering
 marked.use({ async: true });
 
-const RichTextEditor = ({ content, setContent, title = "Untitled" }) => {
+const RichTextEditor = ({ content, setContent, title = "Untitled", onContentChange, onCreateNoteFromImport }) => {
   const fileInputRef = useRef();
   const [showPreview, setShowPreview] = useState(false);
   const [previewContent, setPreviewContent] = useState('');
@@ -89,7 +94,14 @@ const RichTextEditor = ({ content, setContent, title = "Untitled" }) => {
       }),
     ],
     content: content || '',
-    onUpdate: ({ editor }) => setContent(editor.getHTML()),
+    onUpdate: ({ editor }) => {
+      const newContent = editor.getHTML();
+      setContent(newContent);
+      // Trigger content change callback if provided
+      if (onContentChange) {
+        onContentChange(newContent);
+      }
+    },
     editorProps: {
       attributes: {
         class: 'prose prose-chatgpt focus:outline-none',
@@ -137,14 +149,59 @@ const RichTextEditor = ({ content, setContent, title = "Untitled" }) => {
       .replace(/[<>:"/\\|?*]/g, '_') // Replace invalid characters with underscore
       .replace(/\s+/g, '_') // Replace spaces with underscore
       .trim();
-  };
-
-  const exportPDF = async () => {
+  };  const exportPDF = async () => {
     try {
+      // Ensure pdfMake is properly initialized
+      if (!pdfMake.vfs || Object.keys(pdfMake.vfs).length === 0) {
+        console.warn('PDF fonts not loaded, using default fonts');
+        // Set a minimal font setup
+        pdfMake.vfs = {
+          'Roboto-Regular.ttf': '',
+          'Roboto-Medium.ttf': '',
+          'Roboto-Italic.ttf': '',
+          'Roboto-MediumItalic.ttf': ''
+        };
+        pdfMake.fonts = {
+          Roboto: {
+            normal: 'Roboto-Regular.ttf',
+            bold: 'Roboto-Medium.ttf',
+            italics: 'Roboto-Italic.ttf',
+            bolditalics: 'Roboto-MediumItalic.ttf'
+          }
+        };
+      }
+      
       const html = `<div>${editor.getHTML()}</div>`;
-      const pdfContent = htmlToPdfmake(html);
+      
+      // Try to convert HTML to PDF content
+      let pdfContent;
+      try {
+        pdfContent = htmlToPdfmake(html, {
+          defaultStyles: {
+            h1: { fontSize: 18, bold: true, margin: [0, 0, 0, 10] },
+            h2: { fontSize: 15, bold: true, margin: [0, 10, 0, 5] },
+            h3: { fontSize: 13, bold: true, margin: [0, 10, 0, 5] },
+            p: { margin: [0, 5, 0, 5] },
+            ul: { margin: [0, 5, 0, 5] },
+            ol: { margin: [0, 5, 0, 5] },
+          }
+        });
+      } catch (htmlError) {
+        console.warn('HTML to PDF conversion failed, using fallback:', htmlError);
+        // Fallback: create simple text content
+        const textContent = editor.getText();
+        pdfContent = [
+          { text: title || 'Document', style: 'header' },
+          { text: textContent, style: 'normal' }
+        ];
+      }
+      
       const docDefinition = { 
         content: pdfContent,
+        defaultStyle: {
+          fontSize: 11,
+          lineHeight: 1.4
+        },
         styles: {
           header: {
             fontSize: 18,
@@ -155,16 +212,21 @@ const RichTextEditor = ({ content, setContent, title = "Untitled" }) => {
             fontSize: 15,
             bold: true,
             margin: [0, 10, 0, 5]
+          },
+          normal: {
+            fontSize: 11,
+            margin: [0, 5, 0, 5]
           }
         }
       };
-      const filename = `${sanitizeFilename(title)}.pdf`;
+      
+      const filename = `${sanitizeFilename(title || 'document')}.pdf`;
       pdfMake.createPdf(docDefinition).download(filename);
     } catch (err) {
       console.error("PDF export failed:", err);
-      alert("Could not export PDF. Check the console for details.");
+      alert(`Could not export PDF: ${err.message}. Please try again or use a different export format.`);
     }
-  };  const exportMarkdown = () => {
+  };const exportMarkdown = () => {
     try {
       // Convert HTML to plain text markdown-like format
       const html = editor.getHTML();
@@ -216,21 +278,42 @@ const RichTextEditor = ({ content, setContent, title = "Untitled" }) => {
       console.error('Error exporting JSON:', error);
       alert('Failed to export as JSON');
     }
-  };
-
-  const importFile = async e => {
+  };  const importFile = async e => {
     const file = e.target.files[0];
     if (!file) return;
 
     const reader = new FileReader();
     reader.onload = async ev => {
       try {
+        let htmlContent = '';
+        let importedTitle = title;
+        
         if (file.name.endsWith('.md')) {
-          const htmlContent = await marked.parse(ev.target.result);
-          editor.commands.setContent(htmlContent);
+          const markdownContent = ev.target.result;
+          htmlContent = await marked.parse(markdownContent);
+          // Extract title from filename if no title provided
+          if (title === 'Untitled' || !title) {
+            importedTitle = file.name.replace(/\.md$/, '');
+          }
         } else if (file.name.endsWith('.json')) {
-          const { content } = JSON.parse(ev.target.result);
-          editor.commands.setContent(content);
+          const jsonData = JSON.parse(ev.target.result);
+          htmlContent = jsonData.content;
+          if (jsonData.title && (title === 'Untitled' || !title)) {
+            importedTitle = jsonData.title;
+          }
+        }
+
+        // Check if we need to create a new note
+        if (onCreateNoteFromImport && (!title || title === 'Untitled')) {
+          // Create a new note with the imported content
+          await onCreateNoteFromImport(importedTitle, htmlContent);
+        } else {
+          // Update existing note
+          editor.commands.setContent(htmlContent);
+          // Trigger content change callback after import
+          if (onContentChange) {
+            onContentChange(htmlContent);
+          }
         }
       } catch (error) {
         console.error('Error importing file:', error);

@@ -128,27 +128,84 @@ export default function NotesApp() {
     });
     const data = await res.json();
     setNotes(data);
-  };
-  const addNote = async () => {
-    if (!user?.token) return;
-    const now = new Date();
-    const dateTime = now.toLocaleString();
-    const defaultTitle = `Untitled - ${dateTime}`;
+  };  const addNote = async () => {
+    if (user?.token) {
+      // Authenticated user
+      const now = new Date();
+      const dateTime = now.toLocaleString();
+      const defaultTitle = `Untitled - ${dateTime}`;
 
-    const res = await fetch("http://localhost:8000/notes/", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${user.token}`
-      },
-      body: JSON.stringify({ title: defaultTitle, content: "" })
-    });
-    const newNote = await res.json();
-    setNotes((prev) => [newNote, ...prev]);
-    setActiveId(newNote.id);
-    setTitleDraft(newNote.title);
-    setDraft(newNote.content);
-    setSearch("");
+      const res = await fetch("http://localhost:8000/notes/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${user.token}`
+        },
+        body: JSON.stringify({ title: defaultTitle, content: "" })
+      });
+      const newNote = await res.json();
+      setNotes((prev) => [newNote, ...prev]);
+      setActiveId(newNote.id);
+      setTitleDraft(newNote.title);
+      setDraft(newNote.content);
+      setSearch("");
+    } else if (user?.name === "Guest") {
+      // Guest user
+      const now = new Date();
+      const dateTime = now.toLocaleString();
+      const defaultTitle = `Untitled - ${dateTime}`;
+      
+      const newNote = {
+        id: Date.now().toString(),
+        title: defaultTitle,
+        content: "",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      setNotes((prev) => [newNote, ...prev]);
+      setActiveId(newNote.id);
+      setTitleDraft(newNote.title);
+      setDraft(newNote.content);
+      setSearch("");
+    }
+  };
+  const addNoteFromImport = async (importTitle, importContent) => {
+    if (user?.token) {
+      // Authenticated user - save to backend
+      const res = await fetch("http://localhost:8000/notes/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${user.token}`
+        },
+        body: JSON.stringify({ title: importTitle, content: importContent })
+      });
+      const newNote = await res.json();
+      setNotes((prev) => [newNote, ...prev]);
+      setActiveId(newNote.id);
+      setTitleDraft(newNote.title);
+      setDraft(newNote.content);
+      setSearch("");
+      
+      // Trigger save after a short delay to ensure the content is properly set
+      setTimeout(() => {
+        saveNote();
+      }, 100);
+    } else if (user?.name === "Guest") {
+      // Guest user - create local note
+      const newNote = {
+        id: Date.now().toString(),
+        title: importTitle,
+        content: importContent,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      setNotes((prev) => [newNote, ...prev]);
+      setActiveId(newNote.id);
+      setTitleDraft(newNote.title);
+      setDraft(newNote.content);
+      setSearch("");
+    }
   };
 
   const deleteNote = async (id) => {
@@ -297,8 +354,7 @@ export default function NotesApp() {
         </div>
 
         {/* Content */}
-        <div className="flex-1 flex min-h-0">         {/* Editor Area */}          <div className="flex-1 flex flex-col min-h-0">
-            {activeId !== null ? (
+        <div className="flex-1 flex min-h-0">         {/* Editor Area */}          <div className="flex-1 flex flex-col min-h-0">            {activeId !== null ? (
               <div className="flex-1 h-full bg-chatgpt-bg-primary">
                 <NoteEditor
                   titleDraft={titleDraft}
@@ -308,6 +364,7 @@ export default function NotesApp() {
                   saveNote={saveNote}
                   deleteNote={deleteNote}
                   activeId={activeId}
+                  onCreateNoteFromImport={addNoteFromImport}
                 />
               </div>
             ) : (
