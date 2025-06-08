@@ -95,10 +95,11 @@ export default function NotesApp() {
       setDraft("");
       return;
     }
-    setLoadingNotes(true);
-    const fetchOptions = user.token
+    setLoadingNotes(true);    const fetchOptions = user.token
       ? { headers: { Authorization: `Bearer ${user.token}` } }
-      : {};    fetch("http://localhost:8000/notes/", fetchOptions)
+      : {};
+    
+    fetch("http://localhost:8000/notes/", fetchOptions)
       .then((res) => res.json())
       .then((data) => {
         setNotes(data);
@@ -113,22 +114,49 @@ export default function NotesApp() {
   // ──────────────────────────────────────────────────────────────────────────────
   // Notes helpers
   // ──────────────────────────────────────────────────────────────────────────────
+  
   const saveNote = async () => {
-    if (activeId === null || !user?.token) return;
-    await fetch(`http://localhost:8000/notes/${activeId}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${user.token}`
-      },
-      body: JSON.stringify({ title: titleDraft, content: draft })
-    });
-    const res = await fetch("http://localhost:8000/notes/", {
-      headers: { Authorization: `Bearer ${user.token}` }
-    });
-    const data = await res.json();
-    setNotes(data);
-  };  const addNote = async () => {
+    if (activeId === null) return;
+    
+    if (user?.token) {
+      // Authenticated user - save to backend
+      try {
+        await fetch(`http://localhost:8000/notes/${activeId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${user.token}`
+          },
+          body: JSON.stringify({ title: titleDraft, content: draft })
+        });
+        
+        // Refresh notes list to ensure consistency
+        const res = await fetch("http://localhost:8000/notes/", {
+          headers: { Authorization: `Bearer ${user.token}` }
+        });
+        const data = await res.json();
+        setNotes(data);
+      } catch (error) {
+        console.error('Failed to save note:', error);
+      }
+    } else if (user?.name === "Guest") {
+      // Guest user - save to local state
+      setNotes(prevNotes => 
+        prevNotes.map(note => 
+          note.id === activeId 
+            ? { 
+                ...note, 
+                title: titleDraft, 
+                content: draft, 
+                updated_at: new Date().toISOString() 
+              }
+            : note
+        )
+      );
+    }
+  };
+
+  const addNote = async () => {
     if (user?.token) {
       // Authenticated user
       const now = new Date();
@@ -207,15 +235,25 @@ export default function NotesApp() {
       setSearch("");
     }
   };
-
   const deleteNote = async (id) => {
-    if (id === null || !user?.token) return;
-    await fetch(`http://localhost:8000/notes/${id}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${user.token}` }
-    });
+    if (id === null) return;
+    
+    if (user?.token) {
+      // Authenticated user - delete from backend
+      try {
+        await fetch(`http://localhost:8000/notes/${id}`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${user.token}` }
+        });
+      } catch (error) {
+        console.error('Failed to delete note:', error);
+      }
+    }
+    
+    // Update local state for both authenticated and guest users
     const remaining = notes.filter((n) => n.id !== id);
     setNotes(remaining);
+    
     if (id === activeId) {
       const first = remaining[0];
       if (first) {

@@ -47,10 +47,13 @@ if (pdfFonts && pdfFonts.pdfMake && pdfFonts.pdfMake.vfs) {
 // Configure marked to use async rendering
 marked.use({ async: true });
 
-const RichTextEditor = ({ content, setContent, title = "Untitled", onContentChange, onCreateNoteFromImport }) => {
+const RichTextEditor = ({ content, setContent, title = "Untitled", onContentChange, onCreateNoteFromImport, onAutosave }) => {
   const fileInputRef = useRef();
   const [showPreview, setShowPreview] = useState(false);
   const [previewContent, setPreviewContent] = useState('');
+  const [isAutosaving, setIsAutosaving] = useState(false);
+  const [lastSaved, setLastSaved] = useState(new Date());
+  const autosaveTimeoutRef = useRef(null);
   
   // Helper function for toolbar button styling
   const getButtonClasses = (isActive = false) => {
@@ -59,7 +62,44 @@ const RichTextEditor = ({ content, setContent, title = "Untitled", onContentChan
         ? 'bg-chatgpt-accent text-white' 
         : 'bg-chatgpt-bg-element hover:bg-chatgpt-border text-chatgpt-text-secondary hover:text-chatgpt-text-primary'
     }`;
-  };  const editor = useEditor({
+  };  // Autosave functionality
+  const triggerAutosave = async (content) => {
+    if (!onAutosave || !content.trim()) return;
+    
+    try {
+      setIsAutosaving(true);
+      await onAutosave(content);
+      setLastSaved(new Date());
+    } catch (error) {
+      console.error('Autosave failed:', error);
+    } finally {
+      setIsAutosaving(false);
+    }
+  };
+
+  // Debounced autosave
+  const debouncedAutosave = (content) => {
+    // Clear existing timeout
+    if (autosaveTimeoutRef.current) {
+      clearTimeout(autosaveTimeoutRef.current);
+    }
+    
+    // Set new timeout
+    autosaveTimeoutRef.current = setTimeout(() => {
+      triggerAutosave(content);
+    }, 2000); // Save after 2 seconds of inactivity
+  };
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (autosaveTimeoutRef.current) {
+        clearTimeout(autosaveTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const editor = useEditor({
     extensions: [
       StarterKit.configure({
         // Disable the default list extensions from StarterKit
@@ -90,14 +130,15 @@ const RichTextEditor = ({ content, setContent, title = "Untitled", onContentChan
         showOnlyCurrent: true,
       }),
     ],
-    content: content || '',
-    onUpdate: ({ editor }) => {
+    content: content || '',    onUpdate: ({ editor }) => {
       const newContent = editor.getHTML();
       setContent(newContent);
       // Trigger content change callback if provided
       if (onContentChange) {
         onContentChange(newContent);
       }
+      // Trigger autosave
+      debouncedAutosave(newContent);
     },
     editorProps: {
       attributes: {
@@ -495,15 +536,28 @@ const RichTextEditor = ({ content, setContent, title = "Untitled", onContentChan
             className={getButtonClasses()}
           >
             <Upload className="w-4 h-4" />
-          </button>
-
-          <button 
+          </button>          <button 
             onClick={() => setShowPreview(!showPreview)} 
             title="Toggle Preview" 
             className={getButtonClasses()}
           >
             {showPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
           </button>
+
+          {/* Autosave Status Indicator */}
+          <div className="flex items-center gap-2 ml-2 px-2 py-1 rounded-lg bg-chatgpt-bg-element border border-chatgpt-border text-xs text-chatgpt-text-secondary">
+            {isAutosaving ? (
+              <>
+                <div className="animate-spin rounded-full h-3 w-3 border-t border-b border-chatgpt-accent"></div>
+                <span>Saving...</span>
+              </>
+            ) : (
+              <>
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span>Saved {lastSaved.toLocaleTimeString()}</span>
+              </>
+            )}
+          </div>
         </div>
       </div>      {/* Editor + Preview */}
       <div className="flex flex-1 min-h-0 overflow-hidden flex-col md:flex-row">
