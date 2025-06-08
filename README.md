@@ -19,7 +19,6 @@
 - **TipTap Editor** with advanced formatting capabilities
 - **Font customization** with multiple font families
 - **Text alignment** (left, center, right, justify)
-- **Image insertion** and management
 - **Bold, italic, underline, strikethrough** formatting
 - **Lists** (ordered and unordered)
 - **Headings** (H1-H6)

@@ -1,7 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import Image from '@tiptap/extension-image';
 import FontFamily from '@tiptap/extension-font-family';
 import TextStyle from '@tiptap/extension-text-style';
 import TextAlign from '@tiptap/extension-text-align';
@@ -15,7 +14,6 @@ import pdfMake from 'pdfmake/build/pdfmake';
 import { marked } from 'marked';
 
 import {
-  Image as ImageIcon,
   FileDown,
   Upload,
   FileText,
@@ -80,7 +78,6 @@ const RichTextEditor = ({ content, setContent, title = "Untitled", onContentChan
           class: 'my-ordered-list',
         },
       }),
-      Image,
       FontFamily,
       TextStyle,
       TextAlign.configure({
@@ -131,16 +128,9 @@ const RichTextEditor = ({ content, setContent, title = "Untitled", onContentChan
         }
       }
     };
-    
-    updatePreview();
+      updatePreview();
   }, [editor, showPreview, content]);
 
-  const addImage = () => {
-    const url = window.prompt('Enter image URL');
-    if (url) {
-      editor.chain().focus().setImage({ src: url }).run();
-    }
-  };
   const setFont = font => editor.chain().focus().setFontFamily(font).run();
 
   // Helper function to sanitize filename
@@ -455,18 +445,9 @@ const RichTextEditor = ({ content, setContent, title = "Untitled", onContentChan
             title="Redo"
           >
             <Redo className="w-4 h-4" />
-          </button>
-        </div>
+          </button>        </div>
         
         <div className="flex flex-wrap gap-1 ml-auto">
-          <button 
-            onClick={addImage} 
-            title="Add Image" 
-            className={getButtonClasses()}
-          >
-            <ImageIcon className="w-4 h-4" />
-          </button>
-
           <select
             onChange={(e) => setFont(e.target.value)}
             defaultValue=""
@@ -479,7 +460,7 @@ const RichTextEditor = ({ content, setContent, title = "Untitled", onContentChan
             <option value="Courier New">Courier New</option>
             <option value="Times New Roman">Times New Roman</option>
             <option value="Verdana">Verdana</option>
-          </select>          <button 
+          </select><button 
             onClick={exportPDF} 
             title="Export PDF" 
             className={getButtonClasses()}

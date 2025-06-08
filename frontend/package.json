@@ -8,11 +8,9 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
-  },
-  "dependencies": {
+  },  "dependencies": {
     "@tiptap/extension-bullet-list": "^2.14.0",
     "@tiptap/extension-font-family": "^2.12.0",
-    "@tiptap/extension-image": "^2.12.0",
     "@tiptap/extension-list-item": "^2.14.0",
     "@tiptap/extension-ordered-list": "^2.14.0",
     "@tiptap/extension-placeholder": "^2.14.0",

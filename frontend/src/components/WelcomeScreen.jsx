@@ -6,7 +6,7 @@ export default function WelcomeScreen({ onCreateNote, hasNotes = false }) {
     {
       icon: Edit3,
       title: "Rich Text Editor",
-      description: "Write with style using our powerful rich text editor with formatting options, image support, and more."
+      description: "Write with style using our powerful rich text editor with formatting options, text alignment, and more."
     },
     {
       icon: Save,
