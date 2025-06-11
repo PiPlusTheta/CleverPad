@@ -107,7 +107,7 @@ Before setting up CleverPad, ensure you have the following installed:
 
 2. **Configure environment variables**
    
-   Create a `.env` file in the `backend` directory:
+   Copy `backend/.env.example` to `backend/.env` and update the values as needed:
    ```env
    DATABASE_URL=postgresql://cleverpad_user:your_password@localhost:5432/CleverPad
    SECRET_KEY=your-super-secret-key-here
@@ -166,7 +166,7 @@ CleverPad/
 │   │   ├── database.py        # Database connection
 │   │   └── main.py            # FastAPI application entry point
 │   ├── requirements.txt       # Python dependencies
-│   └── .env                   # Environment variables
+│   └── .env.example                   # Sample environment variables
 ├── 📁 frontend/               # React frontend
 │   ├── 📁 src/
 │   │   ├── 📁 components/     # React components

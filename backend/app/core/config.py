@@ -2,9 +2,7 @@ from pydantic import BaseModel
 from dotenv import load_dotenv
 import os
 
-load_dotenv()  # reads .env
-
-
+load_dotenv()  # load environment variables from .env file
 class Settings(BaseModel):
     database_url: str = os.getenv("DATABASE_URL")
     secret_key: str = os.getenv("SECRET_KEY")
